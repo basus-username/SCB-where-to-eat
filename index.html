@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Where To Eat — Group Polls</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#141319;
+    --surface:#1E1C27;
+    --surface-2:#2E2A3D;
+    --border:#4E4768;
+    --text:#F5F3FA;
+    --text-muted:#A39DB8;
+    --violet:#A594F5;
+    --violet-dim:#332C4D;
+    --violet-tint:#251F38;
+    --gold:#EFB65C;
+    --gold-dim:#4A3820;
+    --rose:#E88989;
+    --rose-dim:#4A2A2A;
+    --green:#7FCB98;
+    --radius:16px;
+    --radius-sm:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:60px;
+  }
+  .num{font-family:'JetBrains Mono',monospace;font-weight:700;font-variant-numeric:tabular-nums;}
+  h1,h2,h3,.display{font-family:'Fraunces',serif;font-weight:600;}
+  a{color:inherit;}
+  button{font-family:inherit;cursor:pointer;}
+  input,textarea{font-family:inherit;}
+  ::selection{background:var(--violet-dim);}
+
+  #app{max-width:560px;margin:0 auto;padding:20px 16px 40px;}
+
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:6px 2px 22px;
+  }
+  .brand{display:flex;align-items:center;gap:8px;}
+  .brand-mark{
+    width:30px;height:30px;border-radius:8px;
+    background:linear-gradient(155deg,var(--violet),var(--violet-dim));
+    display:flex;align-items:center;justify-content:center;font-size:15px;
+  }
+  .brand-name{font-family:'Fraunces',serif;font-weight:600;font-size:17px;letter-spacing:0.2px;}
+  .voter-chip{
+    display:flex;align-items:center;gap:6px;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:20px;padding:5px 10px 5px 6px;font-size:12.5px;color:var(--text-muted);
+  }
+  .voter-avatar{
+    width:20px;height:20px;border-radius:50%;background:var(--violet);
+    color:var(--bg);font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;
+  }
+
+  /* ---------- Home ---------- */
+  .hero{margin-bottom:18px;}
+  .hero h1{font-size:22px;line-height:1.25;margin:0 0 4px;}
+  .hero p{color:var(--text-muted);font-size:13.5px;line-height:1.4;margin:0;}
+
+  .card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);padding:14px;margin-bottom:12px;
+  }
+  .field-label{font-size:12.5px;color:var(--text);margin-bottom:6px;display:block;font-weight:700;}
+  .field{
+    width:100%;background:var(--surface-2);border:1.5px solid var(--border);
+    border-radius:var(--radius-sm);padding:12px 14px;color:var(--text);font-size:15px;
+    margin-bottom:14px;outline:none;transition:border-color .15s,box-shadow .15s;
+    box-shadow:inset 0 1px 3px rgba(0,0,0,0.25);
+  }
+  .field::placeholder{color:var(--text-muted);}
+  .field:focus{border-color:var(--violet);box-shadow:0 0 0 3px rgba(165,148,245,0.25);}
+  textarea.field{resize:vertical;min-height:60px;}
+
+  .btn{
+    border:none;border-radius:var(--radius-sm);padding:12px 18px;font-size:14.5px;font-weight:600;
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:transform .1s,opacity .15s;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{background:var(--violet);color:#fff;width:100%;}
+  .btn-primary:disabled{opacity:0.5;}
+  .btn-ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border);}
+  .btn-sm{padding:8px 12px;font-size:13px;}
+  .btn-gold{background:var(--gold);color:#1a1406;}
+
+  .recent-list{display:flex;flex-direction:column;gap:8px;}
+  .recent-item{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:13px 15px;text-decoration:none;color:var(--text);
+  }
+  .recent-item:active{background:var(--surface-2);}
+  .recent-item-title{font-weight:600;font-size:14.5px;}
+  .recent-item-meta{font-size:12px;color:var(--text-muted);margin-top:2px;}
+  .chevron{color:var(--text-muted);}
+
+  .section-label{
+    font-size:11.5px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);
+    font-weight:700;margin:26px 0 10px;
+  }
+
+  /* ---------- Poll view ---------- */
+  .poll-header{margin-bottom:18px;}
+  .poll-title{font-size:24px;margin:0 0 6px;}
+  .poll-meta{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--text-muted);}
+  .status-pill{
+    padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+  }
+  .status-open{background:rgba(140,122,230,0.18);color:var(--violet);}
+  .status-closed{background:rgba(217,118,118,0.18);color:var(--rose);}
+  .icon-btn{
+    background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+    font-size:13px;font-weight:600;padding:7px 12px;border-radius:20px;
+    display:inline-flex;align-items:center;gap:5px;
+  }
+  .icon-btn:active{background:var(--violet-dim);}
+
+  .option-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:12px;margin-bottom:10px;position:relative;overflow:hidden;
+  }
+  .option-card.leading{border-color:var(--gold);}
+  .option-card.leading::before{
+    content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);
+  }
+  .option-top{display:flex;gap:12px;}
+  .option-photo{
+    width:64px;height:64px;border-radius:var(--radius-sm);object-fit:cover;flex-shrink:0;background:var(--surface-2);
+  }
+  .option-photo-placeholder{
+    width:64px;height:64px;border-radius:var(--radius-sm);flex-shrink:0;
+    background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--text-muted);
+  }
+  .option-info{flex:1;min-width:0;}
+  .leading-eyebrow{font-size:10.5px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;}
+  .option-name{font-weight:600;font-size:15.5px;margin:0 0 3px;}
+  .option-sub{font-size:12px;color:var(--text-muted);display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .link-chip{
+    color:var(--violet);text-decoration:none;font-weight:600;
+    background:rgba(140,122,230,0.12);border:1px solid var(--violet-dim);
+    padding:3px 9px;border-radius:20px;font-size:11.5px;
+  }
+  .option-notes{font-size:13px;color:var(--text-muted);margin-top:6px;line-height:1.4;}
+
+  .option-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:10px;}
+  .voter-tokens{display:flex;flex-wrap:wrap;gap:5px;flex:1;}
+  .voter-token{
+    width:24px;height:24px;border-radius:50%;background:var(--violet-dim);border:1px solid var(--violet);
+    color:var(--text);font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .vote-count{font-size:11.5px;color:var(--text-muted);}
+
+  .vote-btn{
+    background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+    padding:8px 14px;border-radius:20px;font-size:13px;font-weight:600;flex-shrink:0;
+  }
+  .vote-btn.voted{background:var(--violet);border-color:var(--violet);color:#fff;}
+  .vote-btn:disabled{opacity:0.4;}
+
+  .add-option-card{background:var(--violet-tint);border:1.5px solid var(--violet);}
+  .add-option-card .field{background:var(--surface-2);border-color:var(--violet-dim);}
+  .autofill-row{display:flex;gap:8px;}
+  .autofill-row .field{margin-bottom:0;flex:1;}
+  .autofill-status{font-size:12px;color:var(--text-muted);margin:8px 0 0;min-height:16px;}
+
+  .empty-state{
+    text-align:center;color:var(--text-muted);font-size:13.5px;padding:30px 10px;
+  }
+
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:flex-end;justify-content:center;z-index:50;
+  }
+  .modal{
+    background:var(--surface);border:1px solid var(--border);border-radius:18px 18px 0 0;
+    padding:22px 18px 26px;width:100%;max-width:560px;
+  }
+  .modal h3{margin:0 0 6px;}
+  .modal p{color:var(--text-muted);font-size:13.5px;margin:0 0 16px;}
+
+  .toast{
+    position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+    background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+    padding:10px 16px;border-radius:20px;font-size:13px;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+
+  .app-footer{
+    text-align:center;color:var(--text-muted);font-size:11.5px;
+    padding:18px 16px 8px;opacity:0.7;
+  }
+
+  @media (prefers-reduced-motion: reduce){*{transition:none !important;}}
+</style>
+</head>
+<body>
+<div id="app"><div class="empty-state">Loading…</div></div>
+<div class="app-footer">Made with 💚 by YE Chew</div>
+<div id="toast" class="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, deleteField,
+  collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* =========================================================
+   1) FIREBASE SETUP — paste your config from the Firebase
+   console (Project settings → General → Your apps → SDK config).
+   This config is safe to expose client-side.
+   ========================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyA720BwK67-xktnUovId2Gh2wgrbafGVjk",
+  authDomain: "scb-poll-votes-ee57c.firebaseapp.com",
+  projectId: "scb-poll-votes-ee57c",
+  storageBucket: "scb-poll-votes-ee57c.firebasestorage.app",
+  messagingSenderId: "817191277697",
+  appId: "1:817191277697:web:2e6d691f16fb9425cf6980"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+/* ---------- helpers ---------- */
+const $app = document.getElementById('app');
+const $toast = document.getElementById('toast');
+function toast(msg){
+  $toast.textContent = msg;
+  $toast.classList.add('show');
+  setTimeout(()=>$toast.classList.remove('show'), 2200);
+}
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function initialsOf(name){
+  return name.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,3).toUpperCase();
+}
+function genId(len=7){
+  return Array.from(crypto.getRandomValues(new Uint8Array(len)))
+    .map(b => (b % 36).toString(36)).join('');
+}
+
+/* ---------- voter identity (per device) ---------- */
+function getVoter(){
+  const raw = localStorage.getItem('poll_voter');
+  return raw ? JSON.parse(raw) : null;
+}
+function setVoter(name){
+  const v = { name: name.trim(), initials: initialsOf(name) };
+  localStorage.setItem('poll_voter', JSON.stringify(v));
+  return v;
+}
+
+/* ---------- recent polls (per device) ---------- */
+function getRecents(){
+  try { return JSON.parse(localStorage.getItem('poll_recents') || '[]'); } catch { return []; }
+}
+function addRecent(id, title){
+  const list = getRecents().filter(p => p.id !== id);
+  list.unshift({ id, title, ts: Date.now() });
+  localStorage.setItem('poll_recents', JSON.stringify(list.slice(0, 12)));
+}
+
+/* =========================================================
+   ROUTER
+   ========================================================= */
+const params = new URLSearchParams(location.search);
+const pollId = params.get('poll');
+
+if (pollId) {
+  renderPollView(pollId);
+} else {
+  renderHome();
+}
+
+/* =========================================================
+   HOME VIEW
+   ========================================================= */
+function renderHome(){
+  const recents = getRecents();
+  $app.innerHTML = `
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">🍜</div>
+        <div class="brand-name">Where To Eat</div>
+      </div>
+    </div>
+
+    <div class="hero">
+      <h1>Stop the group chat scroll-back.</h1>
+      <p>Start a poll, drop in a few places, everyone votes live.</p>
+    </div>
+
+    <div class="card">
+      <label class="field-label" for="new-title">Poll title</label>
+      <input id="new-title" class="field" placeholder="e.g. Dinner this Sat?" maxlength="60" />
+      <button id="create-btn" class="btn btn-primary">Create poll</button>
+    </div>
+
+    ${recents.length ? `
+      <div class="section-label">Recent polls on this device</div>
+      <div class="recent-list">
+        ${recents.map(r => `
+          <a class="recent-item" href="?poll=${r.id}">
+            <div>
+              <div class="recent-item-title">${escapeHtml(r.title)}</div>
+              <div class="recent-item-meta">${new Date(r.ts).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</div>
+            </div>
+            <span class="chevron">›</span>
+          </a>
+        `).join('')}
+      </div>
+    ` : ''}
+  `;
+
+  document.getElementById('create-btn').addEventListener('click', async () => {
+    const titleInput = document.getElementById('new-title');
+    const title = titleInput.value.trim();
+    if (!title) { titleInput.focus(); return; }
+    const btn = document.getElementById('create-btn');
+    btn.disabled = true; btn.textContent = 'Creating…';
+    try {
+      const id = genId();
+      await setDoc(doc(db, 'polls', id), {
+        title, createdAt: serverTimestamp(), closed: false, multiChoice: false
+      });
+      addRecent(id, title);
+      location.href = `?poll=${id}`;
+    } catch (e) {
+      toast('Could not create poll — check Firebase setup.');
+      btn.disabled = false; btn.textContent = 'Create poll';
+      console.error(e);
+    }
+  });
+}
+
+/* =========================================================
+   POLL VIEW
+   ========================================================= */
+function renderPollView(id){
+  $app.innerHTML = `<div class="empty-state">Loading poll…</div>`;
+
+  const pollRef = doc(db, 'polls', id);
+  const optionsRef = query(collection(db, 'polls', id, 'options'), orderBy('createdAt', 'asc'));
+
+  let pollData = null;
+  let options = [];
+
+  onSnapshot(pollRef, (snap) => {
+    if (!snap.exists()) {
+      $app.innerHTML = `<div class="empty-state">This poll doesn't exist or was removed.<br><br><a href="?" class="btn btn-ghost">Back home</a></div>`;
+      return;
+    }
+    pollData = snap.data();
+    addRecent(id, pollData.title);
+    draw();
+  }, (err) => {
+    $app.innerHTML = `<div class="empty-state">Couldn't load poll — check your Firebase config in index.html.</div>`;
+    console.error(err);
+  });
+
+  onSnapshot(optionsRef, (snap) => {
+    options = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    draw();
+  });
+
+  function draw(){
+    if (!pollData) return;
+    const voter = getVoter();
+    const sorted = [...options].sort((a,b) => voteCount(b) - voteCount(a));
+    const topCount = sorted.length ? voteCount(sorted[0]) : 0;
+
+    $app.innerHTML = `
+      <div class="topbar">
+        <a href="?" class="brand" style="text-decoration:none;">
+          <div class="brand-mark">🍜</div>
+          <div class="brand-name">Where To Eat</div>
+        </a>
+        ${voter ? `
+          <div class="voter-chip" id="voter-chip">
+            <div class="voter-avatar">${escapeHtml(voter.initials)}</div>
+            ${escapeHtml(voter.name)}
+          </div>
+        ` : `<button class="btn btn-ghost btn-sm" id="set-voter-btn">Set your name</button>`}
+      </div>
+
+      <div class="poll-header">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <h1 class="poll-title" style="flex:1;">${escapeHtml(pollData.title)}</h1>
+          <button class="icon-btn" id="edit-title-btn" title="Edit poll title">✏️</button>
+        </div>
+        <div class="poll-meta">
+          <span class="status-pill ${pollData.closed ? 'status-closed' : 'status-open'}">
+            ${pollData.closed ? 'Closed' : 'Voting open'}
+          </span>
+          <span>·</span>
+          <span>${options.length} option${options.length===1?'':'s'}</span>
+        </div>
+        <div class="poll-meta" style="margin-top:10px;flex-wrap:wrap;">
+          <button class="icon-btn" id="toggle-multi-btn" title="Switch between single and multiple choice">
+            ${pollData.multiChoice ? '☑️ Multiple' : '⚪ Single choice'}
+          </button>
+          <button class="icon-btn" id="toggle-close-btn" title="${pollData.closed ? 'Reopen voting' : 'Close voting'}">
+            ${pollData.closed ? '↺ Reopen' : '🔒 Close'}
+          </button>
+          <button class="icon-btn" id="share-btn" title="Copy share link">🔗 Share</button>
+          <button class="icon-btn" id="more-menu-btn" title="More options">⋯</button>
+        </div>
+      </div>
+
+      <div id="more-menu" style="display:none;margin:-10px 0 16px;">
+        <button class="icon-btn" id="delete-poll-btn" title="Delete this poll" style="background:var(--rose-dim);border-color:var(--rose);color:var(--rose);">🗑️ Delete this poll</button>
+      </div>
+
+      ${options.length === 0 ? `<div class="empty-state">No options yet — add the first place below.</div>` : ''}
+
+      ${sorted.map(opt => optionCardHtml(opt, voter, topCount)).join('')}
+
+      ${!pollData.closed ? addOptionCardHtml() : ''}
+    `;
+
+    bindPollEvents(id, pollData, options, voter);
+  }
+}
+
+function voteCount(opt){ return Object.keys(opt.votes || {}).length; }
+
+function priceLevelLabel(pl){
+  const map = { PRICE_LEVEL_FREE:'Free', PRICE_LEVEL_INEXPENSIVE:'$', PRICE_LEVEL_MODERATE:'$$', PRICE_LEVEL_EXPENSIVE:'$$$', PRICE_LEVEL_VERY_EXPENSIVE:'$$$$' };
+  return map[pl] || '';
+}
+
+function optionCardHtml(opt, voter, topCount){
+  const count = voteCount(opt);
+  const isLeading = count > 0 && count === topCount;
+  const hasVoted = voter && opt.votes && opt.votes[voter.initials + '_' + voter.name];
+  const voters = Object.values(opt.votes || {});
+  const price = priceLevelLabel(opt.priceLevel);
+
+  return `
+    <div class="option-card ${isLeading ? 'leading' : ''}" data-option-id="${opt.id}">
+      <div class="option-top">
+        ${opt.photoName
+          ? `<img class="option-photo" src="/api/photo?name=${encodeURIComponent(opt.photoName)}" loading="lazy" />`
+          : `<div class="option-photo-placeholder">🍽️</div>`}
+        <div class="option-info">
+          ${isLeading ? `<div class="leading-eyebrow">Leading</div>` : ''}
+          <p class="option-name">${escapeHtml(opt.name)}</p>
+          <div class="option-sub">
+            ${opt.rating ? `<span>⭐ ${opt.rating}</span>` : ''}
+            ${price ? `<span>${price}</span>` : ''}
+            ${opt.openNow === true ? `<span style="color:#8FBF8F">Open now</span>` : ''}
+            ${opt.mapsUri ? `<a class="link-chip" href="${escapeHtml(opt.mapsUri)}" target="_blank" rel="noopener">Open in Maps ↗</a>` : ''}
+          </div>
+          ${opt.notes ? `<div class="option-notes">${escapeHtml(opt.notes)}</div>` : ''}
+        </div>
+      </div>
+      <div class="option-bottom">
+        <div class="voter-tokens">
+          ${voters.map(v => `<div class="voter-token" title="${escapeHtml(v.name)}">${escapeHtml(v.initials)}</div>`).join('')}
+          <span class="vote-count num">${count ? count + ' vote' + (count===1?'':'s') : 'No votes yet'}</span>
+        </div>
+        <button class="icon-btn" data-edit="${opt.id}" title="Edit this place">✏️</button>
+        <button class="vote-btn ${hasVoted ? 'voted' : ''}" data-vote-for="${opt.id}">
+          ${hasVoted ? '✓ Voted' : 'Vote'}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function addOptionCardHtml(){
+  return `
+    <div class="card add-option-card">
+      <label class="field-label" style="color:var(--violet);">Paste a Google Maps link (from WhatsApp/Maps share)</label>
+      <div class="autofill-row">
+        <input id="opt-maps" class="field" placeholder="Or type/paste link here" />
+        <button id="resolve-btn" class="btn btn-gold btn-sm">📋 Paste link</button>
+      </div>
+      <p class="autofill-status" id="resolve-status"></p>
+      <label class="field-label">Name</label>
+      <input id="opt-name" class="field" placeholder="Restaurant name" />
+      <label class="field-label">Notes (optional)</label>
+      <textarea id="opt-notes" class="field" placeholder="e.g. good for groups, must book ahead"></textarea>
+      <button id="add-option-btn" class="btn btn-primary">Add to poll</button>
+    </div>
+  `;
+}
+
+/* ---------- event binding for poll view ---------- */
+function bindPollEvents(pollId, pollData, options, voter){
+  const setVoterBtn = document.getElementById('set-voter-btn');
+  const voterChip = document.getElementById('voter-chip');
+  if (setVoterBtn) setVoterBtn.addEventListener('click', () => askVoterName());
+  if (voterChip) voterChip.addEventListener('click', () => askVoterName());
+
+  document.getElementById('share-btn')?.addEventListener('click', () => {
+    navigator.clipboard?.writeText(location.href);
+    toast('Link copied — send it to the group!');
+  });
+
+  document.getElementById('toggle-close-btn')?.addEventListener('click', async () => {
+    await updateDoc(doc(db, 'polls', pollId), { closed: !pollData.closed });
+  });
+
+  document.getElementById('toggle-multi-btn')?.addEventListener('click', async () => {
+    await updateDoc(doc(db, 'polls', pollId), { multiChoice: !pollData.multiChoice });
+    toast(pollData.multiChoice ? 'Switched to single choice' : 'Switched to multiple choice');
+  });
+
+  document.getElementById('edit-title-btn')?.addEventListener('click', () => openEditTitleModal(pollId, pollData.title));
+
+  document.getElementById('more-menu-btn')?.addEventListener('click', () => {
+    const menu = document.getElementById('more-menu');
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+  });
+
+  document.getElementById('delete-poll-btn')?.addEventListener('click', () => openDeletePollModal(pollId, pollData.title));
+
+  document.querySelectorAll('[data-vote-for]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const optId = btn.getAttribute('data-vote-for');
+      const v = getVoter();
+      if (!v) { askVoterName(() => castVote(pollId, options, optId, pollData.multiChoice)); return; }
+      castVote(pollId, options, optId, pollData.multiChoice);
+    });
+  });
+
+  document.querySelectorAll('[data-edit]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const optId = btn.getAttribute('data-edit');
+      const opt = options.find(o => o.id === optId);
+      openEditModal(pollId, opt);
+    });
+  });
+
+  document.getElementById('add-option-btn')?.addEventListener('click', () => addOption(pollId));
+
+  const mapsInput = document.getElementById('opt-maps');
+  document.getElementById('resolve-btn')?.addEventListener('click', () => pasteAndResolve());
+  mapsInput?.addEventListener('paste', () => setTimeout(resolveMapsLink, 50));
+}
+
+async function castVote(pollId, options, optId, multiChoice){
+  const voter = getVoter();
+  const voterKey = voter.initials + '_' + voter.name;
+  const target = options.find(o => o.id === optId);
+  const alreadyVoted = target?.votes?.[voterKey];
+
+  if (multiChoice) {
+    // multiple choice: just toggle this option, leave others alone
+    await updateDoc(doc(db, 'polls', pollId, 'options', optId), {
+      [`votes.${voterKey}`]: alreadyVoted ? deleteField() : { name: voter.name, initials: voter.initials }
+    });
+    return;
+  }
+
+  // single choice: remove this voter's vote from every other option
+  const updates = options.map(async (opt) => {
+    const has = opt.votes && opt.votes[voterKey];
+    if (opt.id === optId) {
+      return updateDoc(doc(db, 'polls', pollId, 'options', opt.id), {
+        [`votes.${voterKey}`]: alreadyVoted ? deleteField() : { name: voter.name, initials: voter.initials }
+      });
+    } else if (has) {
+      return updateDoc(doc(db, 'polls', pollId, 'options', opt.id), { [`votes.${voterKey}`]: deleteField() });
+    }
+  });
+  await Promise.all(updates);
+}
+
+async function pasteAndResolve(){
+  const input = document.getElementById('opt-maps');
+  const statusEl = document.getElementById('resolve-status');
+  try {
+    const clip = await navigator.clipboard.readText();
+    if (clip && clip.trim()) {
+      input.value = clip.trim();
+    } else if (!input.value.trim()) {
+      statusEl.textContent = 'Clipboard is empty — copy the link first, then tap this.';
+      return;
+    }
+  } catch (e) {
+    // Clipboard permission denied/unsupported — fall back to whatever's
+    // already typed/pasted manually into the field.
+    if (!input.value.trim()) {
+      statusEl.textContent = "Couldn't read clipboard — paste the link into the field above, then tap this.";
+      input.focus();
+      return;
+    }
+  }
+  resolveMapsLink();
+}
+
+async function resolveMapsLink(){
+  const link = document.getElementById('opt-maps').value.trim();
+  const statusEl = document.getElementById('resolve-status');
+  if (!link) { statusEl.textContent = 'Paste a Google Maps link first.'; return; }
+  statusEl.textContent = 'Reading link…';
+  try {
+    const res = await fetch(`/api/resolve-link?url=${encodeURIComponent(link)}`);
+    const data = await res.json();
+    if (!res.ok || !data.name) {
+      statusEl.textContent = data.error || "Couldn't read a name from that link — type it in below.";
+      return;
+    }
+    document.getElementById('opt-name').value = data.name;
+    if (data.mapsUri) document.getElementById('opt-maps').value = data.mapsUri;
+    statusEl.textContent = `Filled in: ${data.name}`;
+  } catch (e) {
+    statusEl.textContent = "Couldn't read that link — type the name in below.";
+    console.error(e);
+  }
+}
+
+async function addOption(pollId){
+  const name = document.getElementById('opt-name').value.trim();
+  const mapsUri = document.getElementById('opt-maps').value.trim();
+  const notes = document.getElementById('opt-notes').value.trim();
+  if (!name) { document.getElementById('opt-name').focus(); return; }
+
+  const btn = document.getElementById('add-option-btn');
+  btn.disabled = true; btn.textContent = 'Adding…';
+  try {
+    await addDoc(collection(db, 'polls', pollId, 'options'), {
+      name, notes,
+      mapsUri: mapsUri || null,
+      // rating / priceLevel / openNow / photoName are left null for now —
+      // reserved for when Places API autofill gets turned back on later.
+      rating: null, priceLevel: null, openNow: null, photoName: null,
+      votes: {},
+      createdAt: serverTimestamp()
+    });
+    toast('Added to the poll');
+  } catch(e){
+    toast('Could not add option');
+    console.error(e);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Add to poll';
+  }
+}
+
+/* Places API autofill is intentionally disabled for now (avoids requiring
+   billing to be enabled on Google Cloud). The serverless functions in
+   /api/places.js and /api/photo.js are still in the project, unused, ready
+   to wire back in later if wanted. Restaurant names are instead pulled for
+   free via /api/resolve-link.js, which just follows the redirect on a
+   pasted Google Maps share link. */
+
+/* ---------- edit modal ---------- */
+function openEditModal(pollId, opt){
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <h3>Edit place</h3>
+      <p>Changes update live for everyone.</p>
+      <label class="field-label">Name</label>
+      <input id="edit-name" class="field" placeholder="Restaurant name" value="${escapeHtml(opt.name)}" />
+      <label class="field-label">Google Maps link (optional)</label>
+      <input id="edit-maps" class="field" placeholder="Paste a Google Maps link" value="${escapeHtml(opt.mapsUri||'')}" />
+      <label class="field-label">Notes (optional)</label>
+      <textarea id="edit-notes" class="field" placeholder="e.g. good for groups, must book ahead">${escapeHtml(opt.notes||'')}</textarea>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-ghost" id="edit-cancel" style="flex:1">Cancel</button>
+        <button class="btn btn-primary" id="edit-save" style="flex:1">Save</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
+  backdrop.querySelector('#edit-cancel').addEventListener('click', () => backdrop.remove());
+  backdrop.querySelector('#edit-save').addEventListener('click', async () => {
+    const name = document.getElementById('edit-name').value.trim();
+    const mapsUri = document.getElementById('edit-maps').value.trim();
+    const notes = document.getElementById('edit-notes').value.trim();
+    if (!name) return;
+    await updateDoc(doc(db, 'polls', pollId, 'options', opt.id), { name, notes, mapsUri: mapsUri || null });
+    backdrop.remove();
+    toast('Saved');
+  });
+}
+
+/* ---------- edit poll title modal ---------- */
+function openEditTitleModal(pollId, currentTitle){
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <h3>Rename poll</h3>
+      <p>Changes update live for everyone.</p>
+      <label class="field-label">Poll title</label>
+      <input id="title-input" class="field" placeholder="e.g. Dinner this Sat?" value="${escapeHtml(currentTitle)}" maxlength="60" />
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-ghost" id="title-cancel" style="flex:1">Cancel</button>
+        <button class="btn btn-primary" id="title-save" style="flex:1">Save</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  const input = backdrop.querySelector('#title-input');
+  input.focus();
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
+  backdrop.querySelector('#title-cancel').addEventListener('click', () => backdrop.remove());
+  backdrop.querySelector('#title-save').addEventListener('click', async () => {
+    const title = input.value.trim();
+    if (!title) { input.focus(); return; }
+    await updateDoc(doc(db, 'polls', pollId), { title });
+    backdrop.remove();
+    toast('Poll renamed');
+  });
+}
+
+/* ---------- delete poll modal ---------- */
+function openDeletePollModal(pollId, title){
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <h3>Delete "${escapeHtml(title)}"?</h3>
+      <p>This removes the poll and every vote for everyone. This can't be undone.</p>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-ghost" id="delete-cancel" style="flex:1">Cancel</button>
+        <button class="btn" id="delete-confirm" style="flex:1;background:var(--rose);color:#fff;">Delete poll</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
+  backdrop.querySelector('#delete-cancel').addEventListener('click', () => backdrop.remove());
+  backdrop.querySelector('#delete-confirm').addEventListener('click', async () => {
+    const btn = backdrop.querySelector('#delete-confirm');
+    btn.disabled = true; btn.textContent = 'Deleting…';
+    try {
+      const optsSnap = await getDocs(collection(db, 'polls', pollId, 'options'));
+      await Promise.all(optsSnap.docs.map(d => deleteDoc(d.ref)));
+      await deleteDoc(doc(db, 'polls', pollId));
+      const list = getRecents().filter(p => p.id !== pollId);
+      localStorage.setItem('poll_recents', JSON.stringify(list));
+      location.href = '?';
+    } catch (e) {
+      toast('Could not delete poll');
+      btn.disabled = false; btn.textContent = 'Delete poll';
+      console.error(e);
+    }
+  });
+}
+
+/* ---------- voter name prompt ---------- */
+function askVoterName(onDone){
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <h3>What's your name?</h3>
+      <p>Shown next to your vote so friends know who picked what. Saved on this device only.</p>
+      <input id="voter-name-input" class="field" placeholder="e.g. Pikachew" maxlength="20" />
+      <button class="btn btn-primary" id="voter-name-save">Continue</button>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  const input = backdrop.querySelector('#voter-name-input');
+  input.focus();
+  backdrop.querySelector('#voter-name-save').addEventListener('click', () => {
+    const name = input.value.trim();
+    if (!name) { input.focus(); return; }
+    setVoter(name);
+    backdrop.remove();
+    if (onDone) onDone(); else location.reload();
+  });
+}
+</script>
+</body>
+</html>
