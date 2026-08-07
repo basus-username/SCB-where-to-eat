@@ -9,16 +9,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#15141A;
-    --surface:#1E1D26;
-    --surface-2:#26242F;
-    --border:#322F3D;
-    --text:#F1EFF7;
-    --text-muted:#8B8796;
-    --violet:#8C7AE6;
-    --violet-dim:#3E3A5C;
-    --gold:#E3A542;
-    --rose:#D97676;
+    --bg:#F6F5FB;
+    --surface:#FFFFFF;
+    --surface-2:#EEECF8;
+    --border:#DAD5EE;
+    --text:#221E2B;
+    --text-muted:#726C82;
+    --violet:#6F5CDB;
+    --violet-dim:#E7E2FB;
+    --gold:#B87A1E;
+    --gold-dim:#F7E9D1;
+    --rose:#C24949;
+    --rose-dim:#F7DEDE;
+    --green:#2F9E5B;
     --radius:16px;
     --radius-sm:10px;
   }
@@ -76,13 +79,15 @@
     background:var(--surface);border:1px solid var(--border);
     border-radius:var(--radius);padding:18px;margin-bottom:14px;
   }
-  .field-label{font-size:12px;color:var(--text-muted);margin-bottom:6px;display:block;font-weight:600;}
+  .field-label{font-size:12.5px;color:var(--text);margin-bottom:6px;display:block;font-weight:700;}
   .field{
-    width:100%;background:var(--surface-2);border:1px solid var(--border);
-    border-radius:var(--radius-sm);padding:11px 13px;color:var(--text);font-size:15px;
-    margin-bottom:12px;outline:none;transition:border-color .15s;
+    width:100%;background:var(--surface-2);border:1.5px solid var(--border);
+    border-radius:var(--radius-sm);padding:12px 14px;color:var(--text);font-size:15px;
+    margin-bottom:14px;outline:none;transition:border-color .15s,box-shadow .15s;
+    box-shadow:inset 0 1px 2px rgba(34,30,43,0.04);
   }
-  .field:focus{border-color:var(--violet);}
+  .field::placeholder{color:var(--text-muted);}
+  .field:focus{border-color:var(--violet);box-shadow:0 0 0 3px rgba(111,92,219,0.15);}
   textarea.field{resize:vertical;min-height:60px;}
 
   .btn{
@@ -173,7 +178,8 @@
 
   .option-edit-row{display:flex;gap:8px;margin-top:10px;}
 
-  .add-option-card{border-style:dashed;}
+  .add-option-card{background:var(--violet-dim);border:1.5px solid var(--violet);}
+  .add-option-card .field{background:#fff;}
   .autofill-row{display:flex;gap:8px;}
   .autofill-row .field{margin-bottom:0;flex:1;}
   .autofill-status{font-size:12px;color:var(--text-muted);margin:8px 0 0;min-height:16px;}
@@ -209,8 +215,8 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, doc, setDoc, getDoc, updateDoc, deleteField,
-  collection, addDoc, onSnapshot, serverTimestamp, query, orderBy
+  getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, deleteField,
+  collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* =========================================================
@@ -332,7 +338,7 @@ function renderHome(){
     try {
       const id = genId();
       await setDoc(doc(db, 'polls', id), {
-        title, createdAt: serverTimestamp(), closed: false
+        title, createdAt: serverTimestamp(), closed: false, multiChoice: false
       });
       addRecent(id, title);
       location.href = `?poll=${id}`;
@@ -395,18 +401,26 @@ function renderPollView(id){
       </div>
 
       <div class="poll-header">
-        <h1 class="poll-title">${escapeHtml(pollData.title)}</h1>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <h1 class="poll-title" style="flex:1;">${escapeHtml(pollData.title)}</h1>
+          <button class="icon-btn" id="edit-title-btn" title="Edit poll title">✏️</button>
+        </div>
         <div class="poll-meta">
           <span class="status-pill ${pollData.closed ? 'status-closed' : 'status-open'}">
             ${pollData.closed ? 'Closed' : 'Voting open'}
           </span>
           <span>·</span>
           <span>${options.length} option${options.length===1?'':'s'}</span>
-          <span style="flex:1"></span>
+        </div>
+        <div class="poll-meta" style="margin-top:10px;flex-wrap:wrap;">
+          <button class="icon-btn" id="toggle-multi-btn" title="Switch between single and multiple choice">
+            ${pollData.multiChoice ? '☑️ Multiple choice' : '⚪ Single choice'}
+          </button>
           <button class="icon-btn" id="toggle-close-btn" title="${pollData.closed ? 'Reopen voting' : 'Close voting'}">
             ${pollData.closed ? '↺ Reopen' : '🔒 Close'}
           </button>
           <button class="icon-btn" id="share-btn" title="Copy share link">🔗 Share</button>
+          <button class="icon-btn" id="delete-poll-btn" title="Delete this poll" style="background:var(--rose-dim);border-color:var(--rose);color:var(--rose);">🗑️ Delete poll</button>
         </div>
       </div>
 
@@ -481,7 +495,8 @@ function addOptionCardHtml(){
       <p class="autofill-status" id="resolve-status"></p>
       <label class="field-label">Name</label>
       <input id="opt-name" class="field" placeholder="Restaurant name" />
-      <textarea id="opt-notes" class="field" placeholder="Notes — e.g. good for groups, must book ahead"></textarea>
+      <label class="field-label">Notes (optional)</label>
+      <textarea id="opt-notes" class="field" placeholder="e.g. good for groups, must book ahead"></textarea>
       <button id="add-option-btn" class="btn btn-primary">Add to poll</button>
     </div>
   `;
@@ -503,12 +518,21 @@ function bindPollEvents(pollId, pollData, options, voter){
     await updateDoc(doc(db, 'polls', pollId), { closed: !pollData.closed });
   });
 
+  document.getElementById('toggle-multi-btn')?.addEventListener('click', async () => {
+    await updateDoc(doc(db, 'polls', pollId), { multiChoice: !pollData.multiChoice });
+    toast(pollData.multiChoice ? 'Switched to single choice' : 'Switched to multiple choice');
+  });
+
+  document.getElementById('edit-title-btn')?.addEventListener('click', () => openEditTitleModal(pollId, pollData.title));
+
+  document.getElementById('delete-poll-btn')?.addEventListener('click', () => openDeletePollModal(pollId, pollData.title));
+
   document.querySelectorAll('[data-vote-for]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const optId = btn.getAttribute('data-vote-for');
       const v = getVoter();
-      if (!v) { askVoterName(() => castVote(pollId, options, optId)); return; }
-      castVote(pollId, options, optId);
+      if (!v) { askVoterName(() => castVote(pollId, options, optId, pollData.multiChoice)); return; }
+      castVote(pollId, options, optId, pollData.multiChoice);
     });
   });
 
@@ -527,13 +551,21 @@ function bindPollEvents(pollId, pollData, options, voter){
   mapsInput?.addEventListener('paste', () => setTimeout(resolveMapsLink, 50));
 }
 
-async function castVote(pollId, options, optId){
+async function castVote(pollId, options, optId, multiChoice){
   const voter = getVoter();
   const voterKey = voter.initials + '_' + voter.name;
   const target = options.find(o => o.id === optId);
   const alreadyVoted = target?.votes?.[voterKey];
 
-  // remove this voter's vote from every other option (single-choice poll)
+  if (multiChoice) {
+    // multiple choice: just toggle this option, leave others alone
+    await updateDoc(doc(db, 'polls', pollId, 'options', optId), {
+      [`votes.${voterKey}`]: alreadyVoted ? deleteField() : { name: voter.name, initials: voter.initials }
+    });
+    return;
+  }
+
+  // single choice: remove this voter's vote from every other option
   const updates = options.map(async (opt) => {
     const has = opt.votes && opt.votes[voterKey];
     if (opt.id === optId) {
@@ -610,9 +642,12 @@ function openEditModal(pollId, opt){
     <div class="modal">
       <h3>Edit place</h3>
       <p>Changes update live for everyone.</p>
-      <input id="edit-name" class="field" value="${escapeHtml(opt.name)}" />
-      <input id="edit-maps" class="field" placeholder="Google Maps link (optional)" value="${escapeHtml(opt.mapsUri||'')}" />
-      <textarea id="edit-notes" class="field">${escapeHtml(opt.notes||'')}</textarea>
+      <label class="field-label">Name</label>
+      <input id="edit-name" class="field" placeholder="Restaurant name" value="${escapeHtml(opt.name)}" />
+      <label class="field-label">Google Maps link (optional)</label>
+      <input id="edit-maps" class="field" placeholder="Paste a Google Maps link" value="${escapeHtml(opt.mapsUri||'')}" />
+      <label class="field-label">Notes (optional)</label>
+      <textarea id="edit-notes" class="field" placeholder="e.g. good for groups, must book ahead">${escapeHtml(opt.notes||'')}</textarea>
       <div style="display:flex;gap:10px;">
         <button class="btn btn-ghost" id="edit-cancel" style="flex:1">Cancel</button>
         <button class="btn btn-primary" id="edit-save" style="flex:1">Save</button>
@@ -633,6 +668,71 @@ function openEditModal(pollId, opt){
   });
 }
 
+/* ---------- edit poll title modal ---------- */
+function openEditTitleModal(pollId, currentTitle){
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <h3>Rename poll</h3>
+      <p>Changes update live for everyone.</p>
+      <label class="field-label">Poll title</label>
+      <input id="title-input" class="field" placeholder="e.g. Dinner this Sat?" value="${escapeHtml(currentTitle)}" maxlength="60" />
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-ghost" id="title-cancel" style="flex:1">Cancel</button>
+        <button class="btn btn-primary" id="title-save" style="flex:1">Save</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  const input = backdrop.querySelector('#title-input');
+  input.focus();
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
+  backdrop.querySelector('#title-cancel').addEventListener('click', () => backdrop.remove());
+  backdrop.querySelector('#title-save').addEventListener('click', async () => {
+    const title = input.value.trim();
+    if (!title) { input.focus(); return; }
+    await updateDoc(doc(db, 'polls', pollId), { title });
+    backdrop.remove();
+    toast('Poll renamed');
+  });
+}
+
+/* ---------- delete poll modal ---------- */
+function openDeletePollModal(pollId, title){
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <h3>Delete "${escapeHtml(title)}"?</h3>
+      <p>This removes the poll and every vote for everyone. This can't be undone.</p>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-ghost" id="delete-cancel" style="flex:1">Cancel</button>
+        <button class="btn" id="delete-confirm" style="flex:1;background:var(--rose);color:#fff;">Delete poll</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
+  backdrop.querySelector('#delete-cancel').addEventListener('click', () => backdrop.remove());
+  backdrop.querySelector('#delete-confirm').addEventListener('click', async () => {
+    const btn = backdrop.querySelector('#delete-confirm');
+    btn.disabled = true; btn.textContent = 'Deleting…';
+    try {
+      const optsSnap = await getDocs(collection(db, 'polls', pollId, 'options'));
+      await Promise.all(optsSnap.docs.map(d => deleteDoc(d.ref)));
+      await deleteDoc(doc(db, 'polls', pollId));
+      const list = getRecents().filter(p => p.id !== pollId);
+      localStorage.setItem('poll_recents', JSON.stringify(list));
+      location.href = '?';
+    } catch (e) {
+      toast('Could not delete poll');
+      btn.disabled = false; btn.textContent = 'Delete poll';
+      console.error(e);
+    }
+  });
+}
+
 /* ---------- voter name prompt ---------- */
 function askVoterName(onDone){
   const backdrop = document.createElement('div');
@@ -641,7 +741,7 @@ function askVoterName(onDone){
     <div class="modal">
       <h3>What's your name?</h3>
       <p>Shown next to your vote so friends know who picked what. Saved on this device only.</p>
-      <input id="voter-name-input" class="field" placeholder="e.g. Khoo" maxlength="20" />
+      <input id="voter-name-input" class="field" placeholder="e.g. Pikachew" maxlength="20" />
       <button class="btn btn-primary" id="voter-name-save">Continue</button>
     </div>
   `;
