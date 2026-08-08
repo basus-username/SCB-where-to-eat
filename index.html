@@ -55,25 +55,27 @@
 
   #app{max-width:560px;margin:0 auto;padding:20px 16px 40px;}
 
-  /* ---------- permanent undo fab (top right, small, minimal) ---------- */
+  /* ---------- permanent undo fab ----------
+     Lives bottom-right, floating above content, so it never competes with
+     the topbar (brand name, voter chip) for space. It's a single tappable
+     pill — icon + label together — so there's no hover-only tooltip that's
+     unusable on a touchscreen. */
   .undo-fab{
-    position:fixed;top:14px;right:14px;z-index:80;
-    width:36px;height:36px;border-radius:50%;border:1px solid var(--gold);
-    background:var(--gold-dim);color:var(--gold);font-size:16px;
-    display:flex;align-items:center;justify-content:center;
-    opacity:0.32;pointer-events:none;transition:opacity .15s,transform .1s;
-    box-shadow:0 2px 10px rgba(0,0,0,0.35);
+    position:fixed;bottom:18px;right:16px;z-index:80;
+    display:flex;align-items:center;gap:8px;
+    border:1px solid var(--gold);background:var(--gold-dim);color:var(--gold);
+    border-radius:24px;padding:8px 14px 8px 8px;font-size:12.5px;font-weight:600;
+    box-shadow:0 4px 16px rgba(0,0,0,0.4);
+    opacity:0;transform:translateY(8px) scale(0.96);pointer-events:none;
+    transition:opacity .18s,transform .18s;
   }
-  .undo-fab.active{opacity:1;pointer-events:auto;}
-  .undo-fab:active{transform:scale(0.92);}
-  .undo-toast-label{
-    position:fixed;top:16px;right:58px;z-index:80;
-    background:var(--surface-2);border:1px solid var(--border);color:var(--text-muted);
-    font-size:11.5px;padding:5px 10px;border-radius:14px;
-    max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-    opacity:0;pointer-events:none;transition:opacity .2s;
+  .undo-fab.active{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
+  .undo-fab:active{transform:scale(0.95);}
+  .undo-fab-icon{
+    width:26px;height:26px;border-radius:50%;background:rgba(239,182,92,0.18);
+    display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;
   }
-  .undo-toast-label.show{opacity:1;}
+  .undo-fab-text{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
   .topbar{
     display:flex;align-items:center;justify-content:space-between;
@@ -82,7 +84,7 @@
   .brand{display:flex;align-items:center;gap:9px;text-decoration:none;}
   .brand-mark{
     width:30px;height:30px;border-radius:8px;
-    background:linear-gradient(155deg,var(--violet),var(--violet-dim));
+    background:linear-gradient(155deg,#8A6BF0,#D162C9 55%,#FFB648);
     display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;
   }
   .brand-name{font-family:'Fraunces',serif;font-weight:600;font-size:17px;letter-spacing:0.2px;line-height:1.15;}
@@ -127,7 +129,6 @@
   .btn-primary:disabled{opacity:0.5;}
   .btn-ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border);}
   .btn-sm{padding:8px 12px;font-size:13px;}
-  .btn-gold{background:var(--gold);color:#1a1406;}
 
   /* compact action chips — smaller, secondary-feeling */
   .chip-row{display:flex;gap:7px;flex-wrap:wrap;position:relative;}
@@ -195,15 +196,18 @@
     margin-bottom:10px;overflow:hidden;
   }
   .option-row{position:relative;cursor:pointer;}
+  .option-row:focus-visible{outline:2px solid var(--violet);outline-offset:-2px;}
   .opt-progress-bg{position:absolute;left:0;top:0;bottom:0;opacity:0.55;transition:width .3s ease;}
   .opt-row-content{position:relative;display:flex;align-items:center;gap:11px;padding:13px 12px;z-index:1;}
   .opt-row-text{flex:1;min-width:0;}
   .opt-title{font-weight:600;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .opt-count{font-size:12.5px;color:var(--text-muted);flex-shrink:0;}
   .opt-chevron{
-    flex-shrink:0;color:var(--text-muted);font-size:11px;transition:transform .15s;
-    width:16px;display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;color:var(--text-muted);font-size:13px;transition:transform .15s,background .15s;
+    width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    background:var(--surface-2);border:1px solid var(--border);padding:0;
   }
+  .opt-chevron:active{background:var(--violet-dim);}
   .opt-chevron.open{transform:rotate(180deg);}
   .vote-check{
     width:26px;height:26px;border-radius:50%;border:2px solid var(--border);background:var(--bg);
@@ -249,9 +253,18 @@
   .add-option-head h3{margin:0;font-size:14px;font-family:'Inter',sans-serif;font-weight:700;color:var(--violet);}
   .add-collapse-btn{background:transparent;border:none;color:var(--text-muted);font-size:12.5px;font-weight:600;padding:4px;}
   .add-option-card .field{background:var(--surface-2);border-color:var(--violet-dim);}
-  .autofill-row{display:flex;gap:8px;}
-  .autofill-row .field{margin-bottom:0;flex:1;}
-  .autofill-status{font-size:12px;color:var(--text-muted);margin:8px 0 0;min-height:16px;}
+  .autofill-row{display:flex;gap:6px;align-items:stretch;}
+  .autofill-row .field{margin-bottom:0;flex:1;min-width:0;}
+  .btn-secondary{background:var(--surface-2);color:var(--violet);border:1px solid var(--violet-dim);}
+  .link-clear-btn{
+    flex-shrink:0;width:40px;background:var(--surface-2);border:1.5px solid var(--border);
+    color:var(--text-muted);border-radius:var(--radius-sm);font-size:14px;padding:0;
+  }
+  .link-clear-btn:active{background:var(--violet-dim);color:var(--text);}
+  .autofill-status{
+    font-size:12px;color:var(--text-muted);margin:8px 0 0;min-height:16px;
+    overflow-wrap:anywhere;word-break:break-word;white-space:normal;line-height:1.4;
+  }
 
   .tab-row{display:flex;gap:8px;margin-bottom:14px;}
   .tab-btn{
@@ -278,11 +291,12 @@
   }
 
   .modal-backdrop{
-    position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:flex-end;justify-content:center;z-index:90;
+    position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:90;padding:20px;
   }
   .modal{
-    background:var(--surface);border:1px solid var(--border);border-radius:18px 18px 0 0;
-    padding:22px 18px 26px;width:100%;max-width:560px;position:relative;
+    background:var(--surface);border:1px solid var(--border);border-radius:20px;
+    padding:22px 20px 24px;width:100%;max-width:420px;position:relative;
+    max-height:82vh;overflow-y:auto;
   }
   .modal h3{margin:0 0 6px;padding-right:26px;}
   .modal p{color:var(--text-muted);font-size:13.5px;margin:0 0 16px;}
@@ -303,8 +317,9 @@
 </style>
 </head>
 <body>
-<button id="undo-fab" class="undo-fab" aria-label="Undo" title="Nothing to undo">↺</button>
-<div id="undo-toast-label" class="undo-toast-label"></div>
+<button id="undo-fab" class="undo-fab" aria-label="Undo last delete">
+  <span class="undo-fab-icon">↺</span><span class="undo-fab-text" id="undo-fab-text"></span>
+</button>
 <div id="app"><div class="empty-state">Loading…</div></div>
 <div id="toast" class="toast"></div>
 
@@ -371,6 +386,21 @@ function genId(len=7){
   return Array.from(crypto.getRandomValues(new Uint8Array(len)))
     .map(b => (b % 36).toString(36)).join('');
 }
+/* ---------- title-based poll id, so the share link reads like the poll ----------
+   e.g. "Weekend hike?" -> weekend-hike-a8f3k. Keeps the link readable in
+   WhatsApp previews without needing a custom domain/subdomain per poll. */
+function slugify(s){
+  return (s || '')
+    .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
+}
+function genPollId(title){
+  const slug = slugify(title);
+  return slug ? `${slug}-${genId(5)}` : genId(8);
+}
 const WEEKDAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function formatDateOption(iso){
@@ -430,23 +460,17 @@ function removeRecent(id){
    Lives entirely in this browser tab's memory, so it only ever undoes an
    action that this same person just took here — nobody else can trigger it. */
 let pendingUndo = null;
-let undoFadeTimer = null;
 const $undoFab = document.getElementById('undo-fab');
-const $undoLabel = document.getElementById('undo-toast-label');
+const $undoFabText = document.getElementById('undo-fab-text');
 function showUndoBanner(message, restoreFn){
   pendingUndo = { restore: restoreFn };
+  $undoFabText.textContent = message;
+  $undoFab.setAttribute('aria-label', `Undo: ${message}`);
   $undoFab.classList.add('active');
-  $undoFab.title = `Undo: ${message}`;
-  $undoLabel.textContent = message;
-  $undoLabel.classList.add('show');
-  clearTimeout(undoFadeTimer);
-  undoFadeTimer = setTimeout(() => $undoLabel.classList.remove('show'), 3000);
 }
 function hideUndoBanner(){
   pendingUndo = null;
   $undoFab.classList.remove('active');
-  $undoFab.title = 'Nothing to undo';
-  $undoLabel.classList.remove('show');
 }
 $undoFab.addEventListener('click', async () => {
   if (!pendingUndo) return;
@@ -522,7 +546,7 @@ function renderHome(){
     const btn = document.getElementById('create-btn');
     btn.disabled = true; btn.textContent = 'Creating…';
     try {
-      const id = genId();
+      const id = genPollId(title);
       await setDoc(doc(db, 'polls', id), {
         title, createdAt: serverTimestamp(), closed: false, multiChoice: false
       });
@@ -762,21 +786,29 @@ function renderPollView(id){
       draw();
     });
 
-    document.querySelectorAll('[data-vote-for]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const optId = btn.getAttribute('data-vote-for');
+    // Tapping anywhere on an option row votes for it. Only the chevron
+    // button (below, with its own stopPropagation) expands/collapses.
+    document.querySelectorAll('[data-vote-row]').forEach(row => {
+      const fireVote = () => {
+        const wrap = row.closest('.swipe-wrap-option');
+        if (wrap && wrap.dataset.justDragged === '1') { wrap.dataset.justDragged = ''; return; }
+        const optId = row.getAttribute('data-vote-row');
         const v = getVoter();
         if (!v) { askVoterName(() => castVote(pollId, options, optId, pollData.multiChoice)); return; }
         castVote(pollId, options, optId, pollData.multiChoice);
+      };
+      row.addEventListener('click', fireVote);
+      row.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fireVote(); }
       });
     });
 
-    document.querySelectorAll('[data-toggle-expand]').forEach(row => {
-      row.addEventListener('click', () => {
-        const wrap = row.closest('.swipe-wrap-option');
+    document.querySelectorAll('[data-toggle-expand]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const wrap = btn.closest('.swipe-wrap-option');
         if (wrap && wrap.dataset.justDragged === '1') { wrap.dataset.justDragged = ''; return; }
-        const optId = row.getAttribute('data-toggle-expand');
+        const optId = btn.getAttribute('data-toggle-expand');
         if (expandedIds.has(optId)) expandedIds.delete(optId); else expandedIds.add(optId);
         draw();
       });
@@ -814,6 +846,11 @@ function renderPollView(id){
       document.getElementById('add-option-btn')?.addEventListener('click', () => addOption(pollId));
       const linkInput = document.getElementById('opt-link');
       document.getElementById('resolve-btn')?.addEventListener('click', () => pasteAndResolve());
+      document.getElementById('clear-link-btn')?.addEventListener('click', () => {
+        linkInput.value = '';
+        linkInput.focus();
+        document.getElementById('resolve-status').textContent = '';
+      });
       linkInput?.addEventListener('paste', () => setTimeout(resolveLink, 50));
     } else {
       document.getElementById('cal-prev')?.addEventListener('click', () => {
@@ -849,7 +886,7 @@ function renderPollView(id){
       }
       document.getElementById('opt-name').value = data.name;
       if (data.resolvedUrl) document.getElementById('opt-link').value = data.resolvedUrl;
-      statusEl.textContent = `Filled in: ${data.name}`;
+      statusEl.textContent = `Found: ${data.name}`;
     } catch (e) {
       statusEl.textContent = "Couldn't read that link — type the name in below.";
       console.error(e);
@@ -1040,13 +1077,13 @@ function optionCardHtml(opt, voter, totalVotes, isLeading, expanded){
 
   return `
     <div class="option-card" data-option-id="${opt.id}">
-      <div class="option-row" data-toggle-expand="${opt.id}">
+      <div class="option-row" data-vote-row="${opt.id}" role="button" tabindex="0" aria-pressed="${hasVoted}" aria-label="Vote for ${escapeHtml(opt.name)}">
         <div class="opt-progress-bg" style="width:${pct}%;background:${barColor};"></div>
         <div class="opt-row-content">
-          <button class="vote-check ${hasVoted ? 'checked' : ''}" data-vote-for="${opt.id}" aria-label="Vote for ${escapeHtml(opt.name)}">✓</button>
+          <div class="vote-check ${hasVoted ? 'checked' : ''}" aria-hidden="true">✓</div>
           <div class="opt-row-text"><div class="opt-title">${escapeHtml(opt.name)}</div></div>
           <div class="opt-count num">${count}</div>
-          <div class="opt-chevron ${expanded ? 'open' : ''}">▾</div>
+          <button class="opt-chevron ${expanded ? 'open' : ''}" data-toggle-expand="${opt.id}" aria-label="${expanded ? 'Hide' : 'Show'} details for ${escapeHtml(opt.name)}" aria-expanded="${expanded}">▾</button>
         </div>
       </div>
       ${expanded ? `
@@ -1088,14 +1125,15 @@ function addOptionCardHtml(addTab, calState){
 
 function textOptionFormHtml(){
   return `
-    <label class="field-label" style="color:var(--violet);">Paste a link (optional — Maps, IG, XHS, article, etc.)</label>
-    <div class="autofill-row">
-      <input id="opt-link" class="field" placeholder="Paste a link here" />
-      <button id="resolve-btn" class="btn btn-gold btn-sm">📋 Paste</button>
-    </div>
-    <p class="autofill-status" id="resolve-status"></p>
     <label class="field-label">Name</label>
     <input id="opt-name" class="field" placeholder="Option name" />
+    <label class="field-label" style="color:var(--violet);">Paste a link (Optional, eg: Maps, XHS, IG, etc)</label>
+    <div class="autofill-row">
+      <input id="opt-link" class="field" placeholder="Paste a link here" />
+      <button id="clear-link-btn" class="link-clear-btn" type="button" aria-label="Clear link">✕</button>
+      <button id="resolve-btn" class="btn btn-secondary btn-sm">📋 Paste</button>
+    </div>
+    <p class="autofill-status" id="resolve-status"></p>
     <label class="field-label">Notes (optional)</label>
     <textarea id="opt-notes" class="field" placeholder="e.g. good for groups, must book ahead"></textarea>
     <button id="add-option-btn" class="btn btn-primary">Add to poll</button>
