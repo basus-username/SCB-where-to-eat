@@ -53,21 +53,27 @@
   input,textarea{font-family:inherit;}
   ::selection{background:var(--violet-dim);}
 
-  #app{max-width:560px;margin:0 auto;padding:20px 16px 40px;transition:padding-top .15s;}
-  body.has-undo #app{padding-top:64px;}
+  #app{max-width:560px;margin:0 auto;padding:20px 16px 40px;}
 
-  /* ---------- undo bar ---------- */
-  .undo-bar{
-    position:fixed;top:0;left:0;right:0;z-index:80;
-    background:var(--gold-dim);color:var(--gold);
-    display:flex;align-items:center;justify-content:space-between;gap:10px;
-    padding:12px 16px;font-size:13px;font-weight:600;
-    box-shadow:0 2px 12px rgba(0,0,0,0.4);
+  /* ---------- permanent undo fab (top right, small, minimal) ---------- */
+  .undo-fab{
+    position:fixed;top:14px;right:14px;z-index:80;
+    width:36px;height:36px;border-radius:50%;border:1px solid var(--gold);
+    background:var(--gold-dim);color:var(--gold);font-size:16px;
+    display:flex;align-items:center;justify-content:center;
+    opacity:0.32;pointer-events:none;transition:opacity .15s,transform .1s;
+    box-shadow:0 2px 10px rgba(0,0,0,0.35);
   }
-  .undo-bar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .undo-bar-actions{display:flex;align-items:center;gap:12px;flex-shrink:0;}
-  .undo-action{background:transparent;border:1px solid var(--gold);color:var(--gold);border-radius:14px;padding:5px 13px;font-size:12.5px;font-weight:700;}
-  .undo-dismiss{background:transparent;border:none;color:var(--gold);font-size:16px;padding:2px 4px;opacity:0.85;}
+  .undo-fab.active{opacity:1;pointer-events:auto;}
+  .undo-fab:active{transform:scale(0.92);}
+  .undo-toast-label{
+    position:fixed;top:16px;right:58px;z-index:80;
+    background:var(--surface-2);border:1px solid var(--border);color:var(--text-muted);
+    font-size:11.5px;padding:5px 10px;border-radius:14px;
+    max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:opacity .2s;
+  }
+  .undo-toast-label.show{opacity:1;}
 
   .topbar{
     display:flex;align-items:center;justify-content:space-between;
@@ -94,7 +100,7 @@
 
   /* ---------- Home ---------- */
   .hero{margin-bottom:18px;}
-  .hero h1{font-size:22px;line-height:1.25;margin:0 0 4px;}
+  .hero h1{font-size:19px;line-height:1.25;margin:0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .hero p{color:var(--text-muted);font-size:13.5px;line-height:1.4;margin:0;}
 
   .card{
@@ -194,6 +200,11 @@
   .opt-row-text{flex:1;min-width:0;}
   .opt-title{font-weight:600;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .opt-count{font-size:12.5px;color:var(--text-muted);flex-shrink:0;}
+  .opt-chevron{
+    flex-shrink:0;color:var(--text-muted);font-size:11px;transition:transform .15s;
+    width:16px;display:flex;align-items:center;justify-content:center;
+  }
+  .opt-chevron.open{transform:rotate(180deg);}
   .vote-check{
     width:26px;height:26px;border-radius:50%;border:2px solid var(--border);background:var(--bg);
     flex-shrink:0;display:flex;align-items:center;justify-content:center;color:transparent;
@@ -217,7 +228,26 @@
   }
   .vote-count-label{font-size:11.5px;color:var(--text-muted);}
 
+  /* swipe-to-delete for poll option rows — same mechanics as home list */
+  .swipe-wrap-option{position:relative;border-radius:var(--radius);overflow:hidden;margin-bottom:10px;}
+  .swipe-wrap-option .option-card{margin-bottom:0;touch-action:pan-y;will-change:transform;}
+  .swipe-delete-option{
+    position:absolute;top:0;right:0;bottom:0;width:76px;border:none;
+    background:var(--rose);color:#2a1010;font-size:19px;
+    display:flex;align-items:center;justify-content:center;
+  }
+
+  /* ---------- collapsible "add option" control ---------- */
+  .add-toggle-btn{
+    width:100%;background:var(--violet-tint);border:1.5px dashed var(--violet);color:var(--violet);
+    border-radius:var(--radius);padding:12px;font-size:14px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:10px;
+  }
+  .add-toggle-btn:active{background:var(--violet-dim);}
   .add-option-card{background:var(--violet-tint);border:1.5px solid var(--violet);}
+  .add-option-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .add-option-head h3{margin:0;font-size:14px;font-family:'Inter',sans-serif;font-weight:700;color:var(--violet);}
+  .add-collapse-btn{background:transparent;border:none;color:var(--text-muted);font-size:12.5px;font-weight:600;padding:4px;}
   .add-option-card .field{background:var(--surface-2);border-color:var(--violet-dim);}
   .autofill-row{display:flex;gap:8px;}
   .autofill-row .field{margin-bottom:0;flex:1;}
@@ -252,10 +282,15 @@
   }
   .modal{
     background:var(--surface);border:1px solid var(--border);border-radius:18px 18px 0 0;
-    padding:22px 18px 26px;width:100%;max-width:560px;
+    padding:22px 18px 26px;width:100%;max-width:560px;position:relative;
   }
-  .modal h3{margin:0 0 6px;}
+  .modal h3{margin:0 0 6px;padding-right:26px;}
   .modal p{color:var(--text-muted);font-size:13.5px;margin:0 0 16px;}
+  .modal-close{
+    position:absolute;top:16px;right:16px;background:var(--surface-2);border:1px solid var(--border);
+    color:var(--text-muted);width:28px;height:28px;border-radius:50%;font-size:14px;
+    display:flex;align-items:center;justify-content:center;padding:0;
+  }
 
   .toast{
     position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
@@ -268,7 +303,8 @@
 </style>
 </head>
 <body>
-<div id="undo-bar" class="undo-bar" hidden></div>
+<button id="undo-fab" class="undo-fab" aria-label="Undo" title="Nothing to undo">↺</button>
+<div id="undo-toast-label" class="undo-toast-label"></div>
 <div id="app"><div class="empty-state">Loading…</div></div>
 <div id="toast" class="toast"></div>
 
@@ -302,6 +338,29 @@ function toast(msg){
   $toast.classList.add('show');
   setTimeout(()=>$toast.classList.remove('show'), 2200);
 }
+/* ---------- modal helpers: back button closes the modal, not the app ---------- */
+function openModal(backdrop){
+  document.body.appendChild(backdrop);
+  history.pushState({ modal: true }, '');
+  const modal = backdrop.querySelector('.modal');
+  if (modal && !modal.querySelector('.modal-close')) {
+    const x = document.createElement('button');
+    x.className = 'modal-close';
+    x.setAttribute('aria-label', 'Close');
+    x.textContent = '✕';
+    x.addEventListener('click', () => closeModal(backdrop));
+    modal.prepend(x);
+  }
+}
+function closeModal(backdrop){
+  if (!backdrop.isConnected) return;
+  backdrop.remove();
+  if (history.state && history.state.modal) history.back();
+}
+window.addEventListener('popstate', () => {
+  document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+});
+
 function escapeHtml(s){
   return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
@@ -316,16 +375,39 @@ const WEEKDAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function formatDateOption(iso){
   const d = new Date(iso + 'T00:00:00');
-  return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  return `${d.getDate()} ${MONTHS[d.getMonth()]}, ${WEEKDAYS[d.getDay()]}`;
 }
 
-/* ---------- voter identity (per device) ---------- */
+/* ---------- brand mark (inline SVG so it matches the app icon) ---------- */
+const BRAND_ICON_SVG = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10.5v7.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7.5"/><path d="M3.5 10.5h17"/><path d="M10 10.5 8 4h4l2 6.5"/><path d="m9.3 5.6 1.2 1.2L13 4.6"/></svg>`;
+
+/* ---------- per-person colour, consistent across every poll on this device ---------- */
+const PERSON_COLORS = ['#A594F5','#EFB65C','#7FCB98','#E88989','#6FB8E0','#E0A5D8','#C9CE6B','#E39B6B','#8FD0C4','#B8A0F0'];
+function getPersonColor(voterId){
+  let map = {};
+  try { map = JSON.parse(localStorage.getItem('poll_person_colors') || '{}'); } catch {}
+  if (map[voterId] === undefined) {
+    const used = Object.values(map);
+    map[voterId] = used.length % PERSON_COLORS.length;
+    localStorage.setItem('poll_person_colors', JSON.stringify(map));
+  }
+  return PERSON_COLORS[map[voterId]];
+}
+
+/* ---------- voter identity (per device) ----------
+   Identity is a permanent random id, separate from the display name, so
+   renaming never creates a "new" voter or duplicates their votes. */
 function getVoter(){
   const raw = localStorage.getItem('poll_voter');
   return raw ? JSON.parse(raw) : null;
 }
+function getOrCreateVoterId(){
+  let id = localStorage.getItem('poll_voter_id');
+  if (!id) { id = genId(10); localStorage.setItem('poll_voter_id', id); }
+  return id;
+}
 function setVoter(name){
-  const v = { name: name.trim(), initials: initialsOf(name) };
+  const v = { id: getOrCreateVoterId(), name: name.trim(), initials: initialsOf(name) };
   localStorage.setItem('poll_voter', JSON.stringify(v));
   return v;
 }
@@ -344,37 +426,35 @@ function removeRecent(id){
   localStorage.setItem('poll_recents', JSON.stringify(list));
 }
 
-/* ---------- undo banner (works for option-delete and poll-delete) ---------- */
+/* ---------- permanent undo fab (works for option-delete and poll-delete) ----------
+   Lives entirely in this browser tab's memory, so it only ever undoes an
+   action that this same person just took here — nobody else can trigger it. */
 let pendingUndo = null;
+let undoFadeTimer = null;
+const $undoFab = document.getElementById('undo-fab');
+const $undoLabel = document.getElementById('undo-toast-label');
 function showUndoBanner(message, restoreFn){
   pendingUndo = { restore: restoreFn };
-  const bar = document.getElementById('undo-bar');
-  bar.innerHTML = `
-    <span>${escapeHtml(message)}</span>
-    <div class="undo-bar-actions">
-      <button class="undo-action" id="undo-btn">Undo</button>
-      <button class="undo-dismiss" id="undo-dismiss" aria-label="Dismiss">✕</button>
-    </div>
-  `;
-  bar.hidden = false;
-  document.body.classList.add('has-undo');
-  bar.querySelector('#undo-btn').addEventListener('click', async () => {
-    const restore = pendingUndo?.restore;
-    hideUndoBanner();
-    if (restore) {
-      try { await restore(); toast('Restored'); }
-      catch (e) { toast('Could not restore'); console.error(e); }
-    }
-  });
-  bar.querySelector('#undo-dismiss').addEventListener('click', hideUndoBanner);
+  $undoFab.classList.add('active');
+  $undoFab.title = `Undo: ${message}`;
+  $undoLabel.textContent = message;
+  $undoLabel.classList.add('show');
+  clearTimeout(undoFadeTimer);
+  undoFadeTimer = setTimeout(() => $undoLabel.classList.remove('show'), 3000);
 }
 function hideUndoBanner(){
   pendingUndo = null;
-  const bar = document.getElementById('undo-bar');
-  bar.hidden = true;
-  bar.innerHTML = '';
-  document.body.classList.remove('has-undo');
+  $undoFab.classList.remove('active');
+  $undoFab.title = 'Nothing to undo';
+  $undoLabel.classList.remove('show');
 }
+$undoFab.addEventListener('click', async () => {
+  if (!pendingUndo) return;
+  const restore = pendingUndo.restore;
+  hideUndoBanner();
+  try { await restore(); toast('Restored'); }
+  catch (e) { toast('Could not restore'); console.error(e); }
+});
 
 /* =========================================================
    ROUTER
@@ -396,7 +476,7 @@ function renderHome(){
   $app.innerHTML = `
     <div class="topbar">
       <div class="brand">
-        <div class="brand-mark">✅</div>
+        <div class="brand-mark">${BRAND_ICON_SVG}</div>
         <div>
           <div class="brand-name">YouVote</div>
           <div class="credit">By YE Chew</div>
@@ -405,7 +485,7 @@ function renderHome(){
     </div>
 
     <div class="hero">
-      <h1>Stop the group chat scroll-back.</h1>
+      <h1>Vote once. Decide together.</h1>
       <p>Start a poll, drop in a few options, everyone votes live.</p>
     </div>
 
@@ -458,12 +538,12 @@ function renderHome(){
   initSwipeToDelete();
 }
 
-/* ---------- swipe-to-delete on home rows ---------- */
-function initSwipeToDelete(){
+/* ---------- generic swipe-to-delete (used by home list and poll options) ---------- */
+function bindSwipeToDelete(wrapSelector, rowSelector, delBtnAttr, onDelete){
   const OPEN = -76;
-  document.querySelectorAll('.swipe-wrap').forEach(wrap => {
-    const row = wrap.querySelector('.recent-item');
-    const delBtn = wrap.querySelector('.swipe-delete');
+  document.querySelectorAll(wrapSelector).forEach(wrap => {
+    const row = wrap.querySelector(rowSelector);
+    const delBtn = wrap.querySelector(`[${delBtnAttr}]`);
     if (!row) return;
     let startX = 0, startTranslate = 0, current = 0, dragging = false, moved = false, suppressClick = false;
 
@@ -488,17 +568,20 @@ function initSwipeToDelete(){
       row.style.transition = 'transform .18s ease';
       if (!moved) {
         // a tap, not a drag: if the row was already open, this tap should
-        // just close it — never let the click that follows also navigate.
+        // just close it — never let the click that follows also navigate,
+        // and never let a child's own click handler (e.g. expand-on-tap) fire.
         if (startTranslate === OPEN) {
           current = 0;
           row.style.transform = 'translateX(0)';
           suppressClick = true;
+          wrap.dataset.justDragged = '1';
         }
         return;
       }
       current = current < OPEN / 2 ? OPEN : 0;
       row.style.transform = `translateX(${current}px)`;
       suppressClick = true; // a real drag should never also fire navigation
+      wrap.dataset.justDragged = '1';
     };
     row.addEventListener('pointerup', finish);
     row.addEventListener('pointercancel', finish);
@@ -509,11 +592,16 @@ function initSwipeToDelete(){
       }
     });
 
-    delBtn?.addEventListener('click', () => {
-      const id = delBtn.getAttribute('data-swipe-delete');
-      const title = delBtn.getAttribute('data-swipe-title');
-      openDeletePollModal(id, title);
-    });
+    delBtn?.addEventListener('click', () => onDelete(delBtn));
+  });
+}
+
+/* ---------- swipe-to-delete on home rows ---------- */
+function initSwipeToDelete(){
+  bindSwipeToDelete('.swipe-wrap', '.recent-item', 'data-swipe-delete', (delBtn) => {
+    const id = delBtn.getAttribute('data-swipe-delete');
+    const title = delBtn.getAttribute('data-swipe-title');
+    openDeletePollModal(id, title);
   });
 }
 
@@ -530,6 +618,8 @@ function renderPollView(id){
   let options = [];
   let menuOpen = false;
   let addTab = 'text';
+  let addExpanded = false;
+  let namePrompted = false;
   const expandedIds = new Set();
   const calState = { month: new Date(new Date().getFullYear(), new Date().getMonth(), 1), selected: new Set() };
 
@@ -541,6 +631,11 @@ function renderPollView(id){
     pollData = snap.data();
     addRecent(id, pollData.title);
     draw();
+    // ask who's voting as soon as they land on a poll, not on their first tap
+    if (!namePrompted && !getVoter()) {
+      namePrompted = true;
+      askVoterName(() => draw());
+    }
   }, (err) => {
     $app.innerHTML = `<div class="empty-state">Couldn't load poll — check your Firebase config in index.html.</div>`;
     console.error(err);
@@ -554,14 +649,15 @@ function renderPollView(id){
   function draw(){
     if (!pollData) return;
     const voter = getVoter();
-    const sorted = [...options].sort((a,b) => voteCount(b) - voteCount(a));
-    const topCount = sorted.length ? voteCount(sorted[0]) : 0;
+    // options stay in creation order — never re-sorted by vote count, so
+    // rows don't jump around as people vote. "Leading" is still highlighted.
+    const topCount = options.length ? Math.max(...options.map(voteCount)) : 0;
     const totalVotes = options.reduce((sum, o) => sum + voteCount(o), 0);
 
     $app.innerHTML = `
       <div class="topbar">
         <a href="?" class="brand">
-          <div class="brand-mark">✅</div>
+          <div class="brand-mark">${BRAND_ICON_SVG}</div>
           <div>
             <div class="brand-name">YouVote</div>
             <div class="credit">By YE Chew</div>
@@ -569,7 +665,7 @@ function renderPollView(id){
         </a>
         ${voter ? `
           <div class="voter-chip" id="voter-chip">
-            <div class="voter-avatar">${escapeHtml(voter.initials)}</div>
+            <div class="voter-avatar" style="background:${getPersonColor(voter.id)};">${escapeHtml(voter.initials)}</div>
             ${escapeHtml(voter.name)}
           </div>
         ` : `<button class="btn btn-ghost btn-sm" id="set-voter-btn">Set your name</button>`}
@@ -601,11 +697,20 @@ function renderPollView(id){
         ` : ''}
       </div>
 
-      ${options.length === 0 ? `<div class="empty-state">No options yet — add the first one below.</div>` : ''}
+      ${!pollData.closed ? (addExpanded
+          ? addOptionCardHtml(addTab, calState)
+          : `<button class="add-toggle-btn" id="add-toggle-btn">＋ Add an option</button>`
+        ) : ''}
 
-      ${sorted.map(opt => optionCardHtml(opt, voter, totalVotes, opt===sorted[0] && topCount>0, expandedIds.has(opt.id))).join('')}
+      ${options.length === 0 ? `<div class="empty-state">No options yet — add the first one above.</div>` : ''}
 
-      ${!pollData.closed ? addOptionCardHtml(addTab, calState) : ''}
+      ${options.length ? `<div class="swipe-hint">Swipe an option left to delete</div>` : ''}
+      ${options.map(opt => `
+        <div class="swipe-wrap-option">
+          <button class="swipe-delete-option" data-swipe-delete-option="${opt.id}" aria-label="Delete option">🗑️</button>
+          ${optionCardHtml(opt, voter, totalVotes, voteCount(opt)===topCount && topCount>0, expandedIds.has(opt.id))}
+        </div>
+      `).join('')}
     `;
 
     bindPollEvents(id, pollData, options, voter);
@@ -614,8 +719,26 @@ function renderPollView(id){
   function bindPollEvents(pollId, pollData, options, voter){
     const setVoterBtn = document.getElementById('set-voter-btn');
     const voterChip = document.getElementById('voter-chip');
-    if (setVoterBtn) setVoterBtn.addEventListener('click', () => askVoterName());
-    if (voterChip) voterChip.addEventListener('click', () => askVoterName());
+    if (setVoterBtn) setVoterBtn.addEventListener('click', () => askVoterName(() => draw()));
+    if (voterChip) voterChip.addEventListener('click', () => askVoterName(async (v) => {
+      // renaming relabels this person's existing votes in this poll — it
+      // never creates a duplicate voter or changes what they voted for.
+      const toUpdate = options.filter(o => o.votes && o.votes[v.id]);
+      await Promise.all(toUpdate.map(o => updateDoc(doc(db, 'polls', pollId, 'options', o.id), {
+        [`votes.${v.id}.name`]: v.name,
+        [`votes.${v.id}.initials`]: v.initials
+      })));
+      draw();
+    }));
+
+    document.getElementById('add-toggle-btn')?.addEventListener('click', () => {
+      addExpanded = true;
+      draw();
+    });
+    document.getElementById('add-collapse-btn')?.addEventListener('click', () => {
+      addExpanded = false;
+      draw();
+    });
 
     document.getElementById('share-btn')?.addEventListener('click', () => {
       navigator.clipboard?.writeText(location.href);
@@ -651,6 +774,8 @@ function renderPollView(id){
 
     document.querySelectorAll('[data-toggle-expand]').forEach(row => {
       row.addEventListener('click', () => {
+        const wrap = row.closest('.swipe-wrap-option');
+        if (wrap && wrap.dataset.justDragged === '1') { wrap.dataset.justDragged = ''; return; }
         const optId = row.getAttribute('data-toggle-expand');
         if (expandedIds.has(optId)) expandedIds.delete(optId); else expandedIds.add(optId);
         draw();
@@ -673,6 +798,12 @@ function renderPollView(id){
         const opt = options.find(o => o.id === optId);
         openDeleteOptionModal(pollId, opt);
       });
+    });
+
+    bindSwipeToDelete('.swipe-wrap-option', '.option-card', 'data-swipe-delete-option', (delBtn) => {
+      const optId = delBtn.getAttribute('data-swipe-delete-option');
+      const opt = options.find(o => o.id === optId);
+      if (opt) openDeleteOptionModal(pollId, opt);
     });
 
     document.querySelectorAll('[data-add-tab]').forEach(btn => {
@@ -763,6 +894,8 @@ function renderPollView(id){
         createdAt: serverTimestamp()
       });
       toast('Added to the poll');
+      addExpanded = false;
+      draw();
     } catch(e){
       toast('Could not add option');
       console.error(e);
@@ -784,6 +917,7 @@ function renderPollView(id){
       })));
       calState.selected.clear();
       toast(`Added ${dates.length} date${dates.length===1?'':'s'}`);
+      addExpanded = false;
     } catch (e) {
       toast('Could not add dates');
       console.error(e);
@@ -806,16 +940,16 @@ function renderPollView(id){
         </div>
       </div>
     `;
-    document.body.appendChild(backdrop);
-    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
-    backdrop.querySelector('#delopt-cancel').addEventListener('click', () => backdrop.remove());
+    openModal(backdrop);
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(backdrop); });
+    backdrop.querySelector('#delopt-cancel').addEventListener('click', () => closeModal(backdrop));
     backdrop.querySelector('#delopt-confirm').addEventListener('click', async () => {
       const btn = backdrop.querySelector('#delopt-confirm');
       btn.disabled = true; btn.textContent = 'Deleting…';
       try {
         const { id, ...rest } = opt;
         await deleteDoc(doc(db, 'polls', pollId, 'options', id));
-        backdrop.remove();
+        closeModal(backdrop);
         showUndoBanner(`Deleted "${opt.name}"`, async () => {
           await setDoc(doc(db, 'polls', pollId, 'options', id), rest);
         });
@@ -848,16 +982,16 @@ function renderPollView(id){
         </div>
       </div>
     `;
-    document.body.appendChild(backdrop);
-    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
-    backdrop.querySelector('#edit-cancel').addEventListener('click', () => backdrop.remove());
+    openModal(backdrop);
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(backdrop); });
+    backdrop.querySelector('#edit-cancel').addEventListener('click', () => closeModal(backdrop));
     backdrop.querySelector('#edit-save').addEventListener('click', async () => {
       const name = document.getElementById('edit-name').value.trim();
       const linkVal = document.getElementById('edit-link').value.trim();
       const notes = document.getElementById('edit-notes').value.trim();
       if (!name) return;
       await updateDoc(doc(db, 'polls', pollId, 'options', opt.id), { name, notes, link: linkVal || null });
-      backdrop.remove();
+      closeModal(backdrop);
       toast('Saved');
     });
   }
@@ -878,16 +1012,16 @@ function renderPollView(id){
         </div>
       </div>
     `;
-    document.body.appendChild(backdrop);
+    openModal(backdrop);
     const input = backdrop.querySelector('#title-input');
     input.focus();
-    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
-    backdrop.querySelector('#title-cancel').addEventListener('click', () => backdrop.remove());
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(backdrop); });
+    backdrop.querySelector('#title-cancel').addEventListener('click', () => closeModal(backdrop));
     backdrop.querySelector('#title-save').addEventListener('click', async () => {
       const title = input.value.trim();
       if (!title) { input.focus(); return; }
       await updateDoc(doc(db, 'polls', pollId), { title });
-      backdrop.remove();
+      closeModal(backdrop);
       toast('Poll renamed');
     });
   }
@@ -898,9 +1032,9 @@ function voteCount(opt){ return Object.keys(opt.votes || {}).length; }
 function optionCardHtml(opt, voter, totalVotes, isLeading, expanded){
   const count = voteCount(opt);
   const pct = totalVotes ? Math.round((count / totalVotes) * 100) : 0;
-  const voterKey = voter ? voter.initials + '_' + voter.name : null;
+  const voterKey = voter ? voter.id : null;
   const hasVoted = !!(voterKey && opt.votes && opt.votes[voterKey]);
-  const voters = Object.values(opt.votes || {});
+  const voterEntries = Object.entries(opt.votes || {});
   const link = opt.link ?? opt.mapsUri ?? null;
   const barColor = isLeading && count > 0 ? 'var(--gold)' : 'var(--violet-dim)';
 
@@ -912,6 +1046,7 @@ function optionCardHtml(opt, voter, totalVotes, isLeading, expanded){
           <button class="vote-check ${hasVoted ? 'checked' : ''}" data-vote-for="${opt.id}" aria-label="Vote for ${escapeHtml(opt.name)}">✓</button>
           <div class="opt-row-text"><div class="opt-title">${escapeHtml(opt.name)}</div></div>
           <div class="opt-count num">${count}</div>
+          <div class="opt-chevron ${expanded ? 'open' : ''}">▾</div>
         </div>
       </div>
       ${expanded ? `
@@ -920,7 +1055,10 @@ function optionCardHtml(opt, voter, totalVotes, isLeading, expanded){
           ${link ? `<div class="option-sub"><a class="link-chip" href="${escapeHtml(link)}" target="_blank" rel="noopener">Reference link ↗</a></div>` : ''}
           <div class="option-bottom">
             <div class="voter-tokens">
-              ${voters.map(v => `<div class="voter-token" title="${escapeHtml(v.name)}">${escapeHtml(v.initials)}</div>`).join('')}
+              ${voterEntries.map(([id, v]) => {
+                const c = getPersonColor(id);
+                return `<div class="voter-token" title="${escapeHtml(v.name)}" style="background:${c}22;border-color:${c};color:${c};">${escapeHtml(v.initials)}</div>`;
+              }).join('')}
               <span class="vote-count-label">${count ? count + ' vote' + (count===1?'':'s') + (totalVotes ? ' · ' + pct + '%' : '') : 'No votes yet'}</span>
             </div>
             <button class="chip chip-icon-only" data-edit="${opt.id}" title="Edit this option">✏️</button>
@@ -935,6 +1073,10 @@ function optionCardHtml(opt, voter, totalVotes, isLeading, expanded){
 function addOptionCardHtml(addTab, calState){
   return `
     <div class="card add-option-card">
+      <div class="add-option-head">
+        <h3>Add an option</h3>
+        <button class="add-collapse-btn" id="add-collapse-btn">︿ Done</button>
+      </div>
       <div class="tab-row">
         <button class="tab-btn ${addTab === 'text' ? 'active' : ''}" data-add-tab="text">Text option</button>
         <button class="tab-btn ${addTab === 'date' ? 'active' : ''}" data-add-tab="date">Pick dates</button>
@@ -1006,9 +1148,9 @@ function openDeletePollModal(pollId, title){
       </div>
     </div>
   `;
-  document.body.appendChild(backdrop);
-  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
-  backdrop.querySelector('#delete-cancel').addEventListener('click', () => backdrop.remove());
+  openModal(backdrop);
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(backdrop); });
+  backdrop.querySelector('#delete-cancel').addEventListener('click', () => closeModal(backdrop));
   backdrop.querySelector('#delete-confirm').addEventListener('click', async () => {
     const btn = backdrop.querySelector('#delete-confirm');
     btn.disabled = true; btn.textContent = 'Deleting…';
@@ -1022,7 +1164,7 @@ function openDeletePollModal(pollId, title){
       await deleteDoc(doc(db, 'polls', pollId));
       removeRecent(pollId);
 
-      backdrop.remove();
+      closeModal(backdrop);
       showUndoBanner(`Deleted "${title}"`, async () => {
         await setDoc(doc(db, 'polls', pollId), savedPollData);
         await Promise.all(savedOptions.map(o => setDoc(doc(db, 'polls', pollId, 'options', o.id), o.data)));
@@ -1040,7 +1182,7 @@ function openDeletePollModal(pollId, title){
 
 async function castVote(pollId, options, optId, multiChoice){
   const voter = getVoter();
-  const voterKey = voter.initials + '_' + voter.name;
+  const voterKey = voter.id;
   const target = options.find(o => o.id === optId);
   const alreadyVoted = target?.votes?.[voterKey];
 
@@ -1066,25 +1208,28 @@ async function castVote(pollId, options, optId, multiChoice){
 
 /* ---------- voter name prompt ---------- */
 function askVoterName(onDone){
+  const existing = getVoter();
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop';
   backdrop.innerHTML = `
     <div class="modal">
-      <h3>What's your name?</h3>
-      <p>Shown next to your vote so friends know who picked what. Saved on this device only.</p>
-      <input id="voter-name-input" class="field" placeholder="e.g. Pikachew" maxlength="20" />
-      <button class="btn btn-primary" id="voter-name-save">Continue</button>
+      <h3>${existing ? 'Edit your name' : "What's your name?"}</h3>
+      <p>Shown next to your vote so friends know who picked what. Saved on this device only.${existing ? ' Renaming keeps all your existing votes — it just relabels them.' : ''}</p>
+      <input id="voter-name-input" class="field" placeholder="e.g. Pikachew" maxlength="20" value="${existing ? escapeHtml(existing.name) : ''}" />
+      <button class="btn btn-primary" id="voter-name-save">${existing ? 'Save' : 'Continue'}</button>
     </div>
   `;
-  document.body.appendChild(backdrop);
+  openModal(backdrop);
   const input = backdrop.querySelector('#voter-name-input');
   input.focus();
+  if (existing) input.select();
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(backdrop); });
   backdrop.querySelector('#voter-name-save').addEventListener('click', () => {
     const name = input.value.trim();
     if (!name) { input.focus(); return; }
-    setVoter(name);
-    backdrop.remove();
-    if (onDone) onDone(); else location.reload();
+    const voter = setVoter(name);
+    closeModal(backdrop);
+    if (onDone) onDone(voter);
   });
 }
 
