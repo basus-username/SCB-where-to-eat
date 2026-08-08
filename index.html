@@ -167,6 +167,7 @@
   /* ---------- Poll view ---------- */
   .poll-header{margin-bottom:18px;}
   .poll-title{font-size:24px;margin:0 0 6px;}
+  .poll-subtitle{font-size:13.5px;color:var(--text-muted);margin:-2px 0 10px;}
   .poll-meta{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--text-muted);flex-wrap:wrap;}
   .status-pill{
     padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
@@ -186,7 +187,7 @@
   }
   .menu-item{
     width:100%;text-align:left;background:transparent;border:none;color:var(--text);
-    padding:12px 14px;font-size:13.5px;font-weight:600;border-bottom:1px solid var(--border);
+    padding:12px 14px;font-size:13.5px;font-weight:400;border-bottom:1px solid var(--border);
   }
   .menu-item:last-child{border-bottom:none;}
   .menu-item:active{background:var(--surface-2);}
@@ -221,6 +222,17 @@
     transition:background .15s,border-color .15s,color .15s;
   }
   .vote-btn.checked{background:var(--green);border-color:var(--green);color:#0d1a10;}
+  .select-check{
+    min-width:30px;width:30px;height:30px;border-radius:9px;border:1.5px solid var(--border);
+    background:var(--bg);color:#0d1a10;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:14px;transition:background .15s,border-color .15s;
+  }
+  .select-check.checked{background:var(--violet);border-color:var(--violet);color:#fff;}
+  .bulk-bar{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--violet-tint);border:1.5px solid var(--violet);border-radius:var(--radius-sm);
+    padding:10px 12px;margin-bottom:10px;font-size:13px;color:var(--text);
+  }
   .option-detail{padding:0 14px 14px;border-top:1px solid var(--border);}
   .option-notes{font-size:13px;color:var(--text-muted);line-height:1.4;padding-top:10px;}
   .option-sub{margin-top:8px;}
@@ -232,20 +244,23 @@
   .option-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:8px;}
   .voter-tokens{display:flex;flex-wrap:wrap;gap:5px;flex:1;align-items:center;}
   .voter-token{
-    width:24px;height:24px;border-radius:50%;background:var(--violet-dim);border:1px solid var(--violet);
-    color:var(--text);font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;
-    font-family:'JetBrains Mono',monospace;
+    height:23px;padding:0 9px;border-radius:20px;background:var(--violet-dim);border:1px solid var(--violet);
+    color:var(--text);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;
+    max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
   .vote-count-label{font-size:11.5px;color:var(--text-muted);}
 
   /* swipe-to-delete for poll option rows — same mechanics as home list */
-  .swipe-wrap-option{position:relative;border-radius:var(--radius);overflow:hidden;margin-bottom:10px;}
+  .swipe-wrap-option{position:relative;border-radius:var(--radius);overflow:hidden;margin-bottom:10px;background:var(--rose);}
   .swipe-wrap-option .option-card{margin-bottom:0;touch-action:pan-y;will-change:transform;}
   .swipe-delete-option{
     position:absolute;top:0;right:0;bottom:0;width:76px;border:none;
     background:var(--rose);color:#2a1010;font-size:19px;
     display:flex;align-items:center;justify-content:center;
+    transition:font-size .15s ease;
   }
+  .swipe-wrap-option.swipe-armed .swipe-delete-option{font-size:26px;}
+  .swipe-wrap-option.swipe-armed .option-card{filter:brightness(0.92);}
 
   /* ---------- collapsible "add option" control ---------- */
   .add-toggle-btn{
@@ -267,6 +282,22 @@
     color:var(--text-muted);border-radius:var(--radius-sm);font-size:14px;padding:0;
   }
   .link-clear-btn:active{background:var(--violet-dim);color:var(--text);}
+  .add-link-btn{
+    background:transparent;border:none;color:var(--violet);font-size:12px;font-weight:700;
+    padding:2px 0 14px;text-align:left;display:block;
+  }
+  .extra-link-row{display:flex;gap:6px;align-items:stretch;margin-bottom:10px;}
+  .extra-link-row .field{margin-bottom:0;flex:1;min-width:0;}
+  .history-fab{
+    position:fixed;bottom:18px;z-index:40;width:34px;height:34px;border-radius:50%;
+    background:var(--gold);color:#3a2705;border:none;font-size:16px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.35);
+    opacity:0.92;transition:opacity .15s,transform .1s;
+  }
+  .history-fab:active{transform:scale(0.92);}
+  .history-fab:disabled{opacity:0.28;background:var(--surface-2);color:var(--text-muted);box-shadow:none;}
+  .history-fab-left{left:14px;}
+  .history-fab-right{right:14px;}
   .autofill-status{
     font-size:12px;color:var(--text-muted);margin:8px 0 0;min-height:16px;
     overflow-wrap:anywhere;word-break:break-word;white-space:normal;line-height:1.4;
@@ -386,7 +417,16 @@ function escapeHtml(s){
   return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 function initialsOf(name){
-  return name.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,3).toUpperCase();
+  // Spreading a string (rather than indexing with [0]) iterates by Unicode
+  // code point, so multi-byte characters — emoji included — come out whole
+  // instead of getting sliced into a broken half-surrogate that renders as "?".
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  return words.slice(0, 3).map(w => [...w][0] || '').join('').toUpperCase();
+}
+function shortNameOf(name){
+  // First word only — plays nicer with one-word nicknames than initials do,
+  // and keeps voter chips compact when many people have voted.
+  return (name || '').trim().split(/\s+/)[0] || name || '';
 }
 function genId(len=7){
   return Array.from(crypto.getRandomValues(new Uint8Array(len)))
@@ -588,19 +628,25 @@ function renderHome(){
 }
 
 /* ---------- generic swipe-to-delete (used by home list and poll options) ---------- */
-function bindSwipeToDelete(wrapSelector, rowSelector, delBtnAttr, onDelete){
+function bindSwipeToDelete(wrapSelector, rowSelector, delBtnAttr, onDelete, onAutoDelete){
   const OPEN = -76;
   document.querySelectorAll(wrapSelector).forEach(wrap => {
     const row = wrap.querySelector(rowSelector);
     const delBtn = wrap.querySelector(`[${delBtnAttr}]`);
     if (!row) return;
     let startX = 0, startTranslate = 0, current = 0, dragging = false, moved = false, suppressClick = false;
+    let wrapWidth = 0, FAR = -9999, armed = false;
 
     row.addEventListener('pointerdown', (e) => {
       startX = e.clientX;
       startTranslate = current;
       dragging = true;
       moved = false;
+      armed = false;
+      wrapWidth = wrap.getBoundingClientRect().width;
+      // Far enough that it clearly reads as a deliberate "throw it away"
+      // gesture, not an accidental deep drag — about two-thirds of the row.
+      FAR = onAutoDelete ? -Math.max(200, wrapWidth * 0.62) : -Infinity;
       row.style.transition = 'none';
       row.setPointerCapture?.(e.pointerId);
     });
@@ -608,13 +654,34 @@ function bindSwipeToDelete(wrapSelector, rowSelector, delBtnAttr, onDelete){
       if (!dragging) return;
       const dx = e.clientX - startX;
       if (Math.abs(dx) > 6) moved = true;
-      current = Math.max(OPEN, Math.min(0, startTranslate + dx));
+      const lowerBound = onAutoDelete ? -wrapWidth : OPEN;
+      current = Math.max(lowerBound, Math.min(0, startTranslate + dx));
       row.style.transform = `translateX(${current}px)`;
+      if (onAutoDelete) {
+        const shouldArm = current <= FAR;
+        if (shouldArm !== armed) {
+          armed = shouldArm;
+          wrap.classList.toggle('swipe-armed', armed);
+          if (armed && navigator.vibrate) navigator.vibrate(12);
+        }
+      }
     });
     const finish = () => {
       if (!dragging) return;
       dragging = false;
+      if (onAutoDelete && current <= FAR) {
+        // Swiped far enough — commit to delete immediately, no confirm tap,
+        // sliding the row the rest of the way off-screen first.
+        row.style.transition = 'transform .16s ease, opacity .16s ease';
+        row.style.transform = `translateX(${-wrapWidth}px)`;
+        row.style.opacity = '0';
+        suppressClick = true;
+        wrap.dataset.justDragged = '1';
+        setTimeout(() => onAutoDelete(delBtn), 140);
+        return;
+      }
       row.style.transition = 'transform .18s ease';
+      wrap.classList.remove('swipe-armed');
       if (!moved) {
         // a tap, not a drag: if the row was already open, this tap should
         // just close it — never let the click that follows also navigate,
@@ -670,7 +737,58 @@ function renderPollView(id){
   let addExpanded = false;
   let namePrompted = false;
   const expandedIds = new Set();
+  let selectMode = false;
+  const selectedIds = new Set();
   const calState = { month: new Date(new Date().getFullYear(), new Date().getMonth(), 1), selected: new Set() };
+
+  /* ---------- local undo/redo (this device's own actions only) ----------
+     Never touches anyone else's edits — it just remembers the inverse of
+     whatever *this browser* just did (vote, add option, delete option,
+     edit option) so a mis-tap is one button away from fixed. Resets
+     whenever this poll is reopened, since it's a per-visit convenience,
+     not a synced history. */
+  const history = { undo: [], redo: [] };
+  function pushHistory(entry){
+    history.undo.push(entry);
+    history.redo.length = 0;
+    updateHistoryButtons();
+  }
+  async function performUndo(){
+    const entry = history.undo.pop();
+    if (!entry) return;
+    updateHistoryButtons();
+    try {
+      await entry.undo();
+      history.redo.push(entry);
+      toast(`Undone: ${entry.label}`);
+    } catch (e) {
+      history.undo.push(entry);
+      toast(`Could not undo: ${e.message || 'unknown error'}`);
+      console.error(e);
+    }
+    updateHistoryButtons();
+  }
+  async function performRedo(){
+    const entry = history.redo.pop();
+    if (!entry) return;
+    updateHistoryButtons();
+    try {
+      await entry.redo();
+      history.undo.push(entry);
+      toast(`Redone: ${entry.label}`);
+    } catch (e) {
+      history.redo.push(entry);
+      toast(`Could not redo: ${e.message || 'unknown error'}`);
+      console.error(e);
+    }
+    updateHistoryButtons();
+  }
+  function updateHistoryButtons(){
+    const u = document.getElementById('undo-fab');
+    const r = document.getElementById('redo-fab');
+    if (u) u.disabled = history.undo.length === 0;
+    if (r) r.disabled = history.redo.length === 0;
+  }
 
   onSnapshot(pollRef, (snap) => {
     if (!snap.exists()) {
@@ -726,13 +844,14 @@ function renderPollView(id){
           <h1 class="poll-title" style="flex:1;">${escapeHtml(pollData.title)}</h1>
           <button class="icon-btn" id="edit-title-btn" title="Edit poll title">✏️</button>
         </div>
+        ${pollData.subtitle ? `<div class="poll-subtitle">${escapeHtml(pollData.subtitle)}</div>` : ''}
         <div class="poll-meta">
           <span class="status-pill ${pollData.closed ? 'status-closed' : 'status-open'}">
-            ${pollData.closed ? 'Closed' : 'Voting open'}
+            ${pollData.closed ? 'Options locked' : 'Open'}
           </span>
           <span>·</span>
           <span>${options.length} option${options.length===1?'':'s'}</span>
-          ${!pollData.closed && pollData.closeAt ? `<span>·</span><span>Auto-closes ${formatDateTime(pollData.closeAt)}</span>` : ''}
+          ${!pollData.closed && pollData.closeAt ? `<span>·</span><span>Auto-locks ${formatDateTime(pollData.closeAt)}</span>` : ''}
         </div>
         <div class="chip-row" style="margin-top:10px;">
           <button class="chip" id="toggle-multi-btn" title="Switch between single and multiple choice">
@@ -743,9 +862,10 @@ function renderPollView(id){
         </div>
         ${menuOpen ? `
           <div class="menu-popover" id="more-menu">
-            <button class="menu-item" id="toggle-close-btn">${pollData.closed ? '↺ Reopen voting' : '🔒 Close voting'}</button>
-            <button class="menu-item" id="schedule-close-btn">${pollData.closeAt ? '⏰ Change auto-close time' : '⏰ Auto-close at a set time'}</button>
             <button class="menu-item" id="copy-results-btn">📋 Copy results</button>
+            <button class="menu-item" id="bulk-select-btn">☑️ Select options to delete</button>
+            <button class="menu-item" id="schedule-close-btn">${pollData.closeAt ? '⏰ Change auto-lock time' : '⏰ Auto-lock options at a set time'}</button>
+            <button class="menu-item" id="toggle-close-btn">${pollData.closed ? '↺ Unlock options (allow adding again)' : '🔒 Lock options (voting stays open)'}</button>
           </div>
         ` : ''}
       </div>
@@ -757,19 +877,36 @@ function renderPollView(id){
 
       ${options.length === 0 ? `<div class="empty-state">No options yet — add the first one above.</div>` : ''}
 
-      ${options.length ? `<div class="swipe-hint">Swipe an option left to delete</div>` : ''}
-      ${options.map(opt => `
+      ${selectMode ? `
+        <div class="bulk-bar">
+          <span>${selectedIds.size} selected</span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" id="bulk-cancel-btn">Cancel</button>
+            <button class="btn btn-sm" id="bulk-delete-btn" style="background:var(--rose);color:#2a0f0f;" ${selectedIds.size ? '' : 'disabled'}>🗑️ Delete ${selectedIds.size || ''}</button>
+          </div>
+        </div>
+      ` : (options.length ? `<div class="swipe-hint">Swipe an option left to delete</div>` : '')}
+
+      ${options.map(opt => selectMode ? `
+        ${optionCardHtml(opt, voter, totalVotes, voteCount(opt)===topCount && topCount>0, expandedIds.has(opt.id), true, selectedIds.has(opt.id))}
+      ` : `
         <div class="swipe-wrap-option">
           <button class="swipe-delete-option" data-swipe-delete-option="${opt.id}" aria-label="Delete option">🗑️</button>
           ${optionCardHtml(opt, voter, totalVotes, voteCount(opt)===topCount && topCount>0, expandedIds.has(opt.id))}
         </div>
       `).join('')}
+
+      <button class="history-fab history-fab-left" id="undo-fab" title="Undo your last action" aria-label="Undo" disabled>↺</button>
+      <button class="history-fab history-fab-right" id="redo-fab" title="Redo" aria-label="Redo" disabled>↻</button>
     `;
 
     bindPollEvents(id, pollData, options, voter);
+    updateHistoryButtons();
   }
 
   function bindPollEvents(pollId, pollData, options, voter){
+    document.getElementById('undo-fab')?.addEventListener('click', performUndo);
+    document.getElementById('redo-fab')?.addEventListener('click', performRedo);
     const setVoterBtn = document.getElementById('set-voter-btn');
     const voterChip = document.getElementById('voter-chip');
     if (setVoterBtn) setVoterBtn.addEventListener('click', () => askVoterName(() => draw()));
@@ -800,12 +937,37 @@ function renderPollView(id){
 
     document.getElementById('toggle-close-btn')?.addEventListener('click', async () => {
       try {
-        await updateDoc(doc(db, 'polls', pollId), { closed: !pollData.closed });
+        const willLock = !pollData.closed;
+        await updateDoc(doc(db, 'polls', pollId), { closed: willLock });
+        toast(willLock ? 'Options locked — voting stays open' : 'Options unlocked');
         menuOpen = false;
       } catch (e) {
         toast(`Could not update poll status: ${e.message || 'unknown error'}`);
         console.error(e);
       }
+    });
+
+    document.getElementById('bulk-select-btn')?.addEventListener('click', () => {
+      menuOpen = false;
+      selectMode = true;
+      selectedIds.clear();
+      draw();
+    });
+
+    document.getElementById('bulk-cancel-btn')?.addEventListener('click', () => {
+      selectMode = false;
+      selectedIds.clear();
+      draw();
+    });
+
+    document.getElementById('bulk-delete-btn')?.addEventListener('click', () => {
+      if (!selectedIds.size) return;
+      const chosen = options.filter(o => selectedIds.has(o.id));
+      openBulkDeleteModal(pollId, chosen, () => {
+        selectMode = false;
+        selectedIds.clear();
+        draw();
+      });
     });
 
     document.getElementById('schedule-close-btn')?.addEventListener('click', () => {
@@ -830,7 +992,7 @@ function renderPollView(id){
       }
     });
 
-    document.getElementById('edit-title-btn')?.addEventListener('click', () => openEditTitleModal(pollId, pollData.title));
+    document.getElementById('edit-title-btn')?.addEventListener('click', () => openEditTitleModal(pollId, pollData.title, pollData.subtitle));
 
     document.getElementById('more-menu-btn')?.addEventListener('click', () => {
       menuOpen = !menuOpen;
@@ -844,15 +1006,51 @@ function renderPollView(id){
         const wrap = row.closest('.swipe-wrap-option');
         if (wrap && wrap.dataset.justDragged === '1') { wrap.dataset.justDragged = ''; return; }
         const optId = row.getAttribute('data-vote-row');
+        if (selectMode) {
+          if (selectedIds.has(optId)) selectedIds.delete(optId); else selectedIds.add(optId);
+          draw();
+          return;
+        }
         const v = getVoter();
-        if (!v) { askVoterName(() => castVote(pollId, options, optId, pollData.multiChoice)); return; }
-        castVote(pollId, options, optId, pollData.multiChoice);
+        if (!v) { askVoterName(() => castVoteWithHistory(optId)); return; }
+        castVoteWithHistory(optId);
       };
       row.addEventListener('click', fireVote);
       row.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fireVote(); }
       });
     });
+
+    async function castVoteWithHistory(optId){
+      const voter = getVoter();
+      const voterKey = voter.id;
+      const prevVotedIds = options.filter(o => o.votes && o.votes[voterKey]).map(o => o.id);
+      const wasVotedForThis = prevVotedIds.includes(optId);
+      const target = options.find(o => o.id === optId);
+
+      await castVote(pollId, options, optId, pollData.multiChoice);
+
+      const applyVoteState = async (votedIds) => {
+        const voterObj = { name: voter.name, initials: voter.initials };
+        await Promise.all(options.map(o => {
+          const shouldHave = votedIds.includes(o.id);
+          const has = !!(o.votes && o.votes[voterKey]);
+          if (shouldHave === has) return Promise.resolve();
+          return updateDoc(doc(db, 'polls', pollId, 'options', o.id), {
+            [`votes.${voterKey}`]: shouldHave ? voterObj : deleteField()
+          });
+        }));
+      };
+      const newVotedIds = pollData.multiChoice
+        ? (wasVotedForThis ? prevVotedIds.filter(id => id !== optId) : [...prevVotedIds, optId])
+        : (wasVotedForThis ? [] : [optId]);
+
+      pushHistory({
+        label: `Vote: ${target ? target.name : 'option'}`,
+        undo: () => applyVoteState(prevVotedIds),
+        redo: () => applyVoteState(newVotedIds),
+      });
+    }
 
     document.querySelectorAll('[data-toggle-expand]').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -874,6 +1072,13 @@ function renderPollView(id){
       });
     });
 
+    document.querySelectorAll('[data-voter-fullname]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toast(btn.getAttribute('data-voter-fullname'));
+      });
+    });
+
     document.querySelectorAll('[data-delete-option]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -887,6 +1092,10 @@ function renderPollView(id){
       const optId = delBtn.getAttribute('data-swipe-delete-option');
       const opt = options.find(o => o.id === optId);
       if (opt) openDeleteOptionModal(pollId, opt);
+    }, (delBtn) => {
+      const optId = delBtn.getAttribute('data-swipe-delete-option');
+      const opt = options.find(o => o.id === optId);
+      if (opt) deleteOptionDirect(pollId, opt);
     });
 
     document.querySelectorAll('[data-add-tab]').forEach(btn => {
@@ -903,6 +1112,24 @@ function renderPollView(id){
         document.getElementById('resolve-status').textContent = '';
       });
       linkInput?.addEventListener('paste', () => setTimeout(resolveLink, 50));
+      document.getElementById('add-link-btn')?.addEventListener('click', () => {
+        const wrap = document.getElementById('extra-links-wrap');
+        const row = document.createElement('div');
+        row.className = 'extra-link-row';
+        const input = document.createElement('input');
+        input.className = 'field extra-link-input';
+        input.placeholder = `Another link (optional)`;
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'link-clear-btn';
+        removeBtn.setAttribute('aria-label', 'Remove this link');
+        removeBtn.textContent = '✕';
+        removeBtn.addEventListener('click', () => row.remove());
+        row.appendChild(input);
+        row.appendChild(removeBtn);
+        wrap.appendChild(row);
+        input.focus();
+      });
     } else {
       document.getElementById('cal-prev')?.addEventListener('click', () => {
         calState.month = new Date(calState.month.getFullYear(), calState.month.getMonth() - 1, 1);
@@ -968,18 +1195,28 @@ function renderPollView(id){
   async function addOption(pollId){
     const name = document.getElementById('opt-name').value.trim();
     const link = document.getElementById('opt-link').value.trim();
+    const extraLinks = Array.from(document.querySelectorAll('.extra-link-input')).map(el => el.value.trim()).filter(Boolean);
+    const links = [link, ...extraLinks].filter(Boolean);
     const notes = document.getElementById('opt-notes').value.trim();
     if (!name) { document.getElementById('opt-name').focus(); return; }
 
     const btn = document.getElementById('add-option-btn');
     btn.disabled = true; btn.textContent = 'Adding…';
     try {
-      await addDoc(collection(db, 'polls', pollId, 'options'), {
+      const payload = {
         name, notes,
-        link: link || null,
+        link: links[0] || null,
+        links,
         isDate: false,
         votes: {},
         createdAt: serverTimestamp()
+      };
+      const docRef = await addDoc(collection(db, 'polls', pollId, 'options'), payload);
+      const addedId = docRef.id;
+      pushHistory({
+        label: `Add option: ${name}`,
+        undo: () => deleteDoc(doc(db, 'polls', pollId, 'options', addedId)),
+        redo: () => setDoc(doc(db, 'polls', pollId, 'options', addedId), payload),
       });
       toast('Added to the poll');
       addExpanded = false;
@@ -1015,6 +1252,25 @@ function renderPollView(id){
   }
 
   /* ---------- delete option modal (with undo) ---------- */
+  /* ---------- shared option delete logic (confirm-modal path + far-swipe auto-delete path) ---------- */
+  async function deleteOptionDirect(pollId, opt){
+    try {
+      const { id, ...rest } = opt;
+      await deleteDoc(doc(db, 'polls', pollId, 'options', id));
+      pushHistory({
+        label: `Delete: ${opt.name}`,
+        undo: () => setDoc(doc(db, 'polls', pollId, 'options', id), rest),
+        redo: () => deleteDoc(doc(db, 'polls', pollId, 'options', id)),
+      });
+      showUndoBanner(`Deleted "${opt.name}"`, async () => {
+        await setDoc(doc(db, 'polls', pollId, 'options', id), rest);
+      });
+    } catch (e) {
+      toast(`Could not delete option: ${e.message || 'unknown error'}`);
+      console.error(e);
+    }
+  }
+
   function openDeleteOptionModal(pollId, opt){
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop';
@@ -1038,6 +1294,11 @@ function renderPollView(id){
         const { id, ...rest } = opt;
         await deleteDoc(doc(db, 'polls', pollId, 'options', id));
         closeModal(backdrop);
+        pushHistory({
+          label: `Delete: ${opt.name}`,
+          undo: () => setDoc(doc(db, 'polls', pollId, 'options', id), rest),
+          redo: () => deleteDoc(doc(db, 'polls', pollId, 'options', id)),
+        });
         showUndoBanner(`Deleted "${opt.name}"`, async () => {
           await setDoc(doc(db, 'polls', pollId, 'options', id), rest);
         });
@@ -1049,9 +1310,47 @@ function renderPollView(id){
     });
   }
 
+  /* ---------- bulk delete modal ---------- */
+  function openBulkDeleteModal(pollId, chosenOptions, onDone){
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    const n = chosenOptions.length;
+    backdrop.innerHTML = `
+      <div class="modal">
+        <h3>Delete ${n} option${n===1?'':'s'}?</h3>
+        <p>${chosenOptions.map(o => escapeHtml(o.name)).join(', ')}</p>
+        <p>Removes ${n===1?'this option':'these options'} and their votes. You can undo right after.</p>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-ghost" id="bulkdel-cancel" style="flex:1">Cancel</button>
+          <button class="btn" id="bulkdel-confirm" style="flex:1;background:var(--rose);color:#fff;">Delete ${n}</button>
+        </div>
+      </div>
+    `;
+    openModal(backdrop);
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(backdrop); });
+    backdrop.querySelector('#bulkdel-cancel').addEventListener('click', () => closeModal(backdrop));
+    backdrop.querySelector('#bulkdel-confirm').addEventListener('click', async () => {
+      const btn = backdrop.querySelector('#bulkdel-confirm');
+      btn.disabled = true; btn.textContent = 'Deleting…';
+      const snapshots = chosenOptions.map(({ id, ...rest }) => ({ id, rest }));
+      try {
+        await Promise.all(chosenOptions.map(o => deleteDoc(doc(db, 'polls', pollId, 'options', o.id))));
+        closeModal(backdrop);
+        onDone();
+        showUndoBanner(`Deleted ${n} option${n===1?'':'s'}`, async () => {
+          await Promise.all(snapshots.map(s => setDoc(doc(db, 'polls', pollId, 'options', s.id), s.rest)));
+        });
+      } catch (e) {
+        toast(`Could not delete options: ${e.message || 'unknown error'}`);
+        btn.disabled = false; btn.textContent = `Delete ${n}`;
+        console.error(e);
+      }
+    });
+  }
+
   /* ---------- edit modal ---------- */
   function openEditModal(pollId, opt){
-    const link = opt.link ?? opt.mapsUri ?? '';
+    const links = optionLinks(opt);
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop';
     backdrop.innerHTML = `
@@ -1060,9 +1359,19 @@ function renderPollView(id){
         <p>Changes update live for everyone.</p>
         <label class="field-label">Name</label>
         <input id="edit-name" class="field" placeholder="Option name" value="${escapeHtml(opt.name)}" />
-        <label class="field-label">Reference link (optional)</label>
-        <input id="edit-link" class="field" placeholder="Paste a link" value="${escapeHtml(link)}" />
-        <label class="field-label">Notes (optional)</label>
+        <label class="field-label">Reference link(s)</label>
+        <p class="field-label-sub">Optional</p>
+        <div id="edit-links-wrap">
+          ${(links.length ? links : ['']).map(l => `
+            <div class="extra-link-row">
+              <input class="field edit-link-input" placeholder="Paste a link" value="${escapeHtml(l)}" />
+              <button type="button" class="link-clear-btn" aria-label="Remove this link">✕</button>
+            </div>
+          `).join('')}
+        </div>
+        <button type="button" id="edit-add-link-btn" class="add-link-btn">＋ Add another link</button>
+        <label class="field-label">Notes</label>
+        <p class="field-label-sub">Optional</p>
         <textarea id="edit-notes" class="field" placeholder="e.g. good for groups, must book ahead">${escapeHtml(opt.notes||'')}</textarea>
         <div style="display:flex;gap:10px;">
           <button class="btn btn-ghost" id="edit-cancel" style="flex:1">Cancel</button>
@@ -1073,15 +1382,42 @@ function renderPollView(id){
     openModal(backdrop);
     backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(backdrop); });
     backdrop.querySelector('#edit-cancel').addEventListener('click', () => closeModal(backdrop));
+    backdrop.querySelectorAll('.extra-link-row .link-clear-btn').forEach(btn => {
+      btn.addEventListener('click', () => btn.closest('.extra-link-row').remove());
+    });
+    backdrop.querySelector('#edit-add-link-btn').addEventListener('click', () => {
+      const wrap = backdrop.querySelector('#edit-links-wrap');
+      const row = document.createElement('div');
+      row.className = 'extra-link-row';
+      const input = document.createElement('input');
+      input.className = 'field edit-link-input';
+      input.placeholder = 'Paste a link';
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'link-clear-btn';
+      removeBtn.setAttribute('aria-label', 'Remove this link');
+      removeBtn.textContent = '✕';
+      removeBtn.addEventListener('click', () => row.remove());
+      row.appendChild(input); row.appendChild(removeBtn);
+      wrap.appendChild(row);
+      input.focus();
+    });
     backdrop.querySelector('#edit-save').addEventListener('click', async () => {
       const name = document.getElementById('edit-name').value.trim();
-      const linkVal = document.getElementById('edit-link').value.trim();
+      const newLinks = Array.from(backdrop.querySelectorAll('.edit-link-input')).map(el => el.value.trim()).filter(Boolean);
       const notes = document.getElementById('edit-notes').value.trim();
       if (!name) return;
       const btn = backdrop.querySelector('#edit-save');
       btn.disabled = true; btn.textContent = 'Saving…';
+      const before = { name: opt.name, notes: opt.notes || '', link: opt.link ?? null, links: optionLinks(opt) };
+      const after = { name, notes, link: newLinks[0] || null, links: newLinks };
       try {
-        await updateDoc(doc(db, 'polls', pollId, 'options', opt.id), { name, notes, link: linkVal || null });
+        await updateDoc(doc(db, 'polls', pollId, 'options', opt.id), after);
+        pushHistory({
+          label: `Edit: ${name}`,
+          undo: () => updateDoc(doc(db, 'polls', pollId, 'options', opt.id), before),
+          redo: () => updateDoc(doc(db, 'polls', pollId, 'options', opt.id), after),
+        });
         closeModal(backdrop);
         toast('Saved');
       } catch (e) {
@@ -1093,15 +1429,18 @@ function renderPollView(id){
   }
 
   /* ---------- edit poll title modal ---------- */
-  function openEditTitleModal(pollId, currentTitle){
+  function openEditTitleModal(pollId, currentTitle, currentSubtitle){
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop';
     backdrop.innerHTML = `
       <div class="modal">
-        <h3>Rename poll</h3>
+        <h3>Edit poll</h3>
         <p>Changes update live for everyone.</p>
         <label class="field-label">Poll title</label>
         <input id="title-input" class="field" placeholder="e.g. Next outing?" value="${escapeHtml(currentTitle)}" maxlength="60" />
+        <label class="field-label">Subtitle</label>
+        <p class="field-label-sub">Optional — eg: date, budget, or a short note</p>
+        <input id="subtitle-input" class="field" placeholder="e.g. Fri 8pm, split evenly" value="${escapeHtml(currentSubtitle || '')}" maxlength="80" />
         <div style="display:flex;gap:10px;">
           <button class="btn btn-ghost" id="title-cancel" style="flex:1">Cancel</button>
           <button class="btn btn-primary" id="title-save" style="flex:1">Save</button>
@@ -1115,15 +1454,16 @@ function renderPollView(id){
     backdrop.querySelector('#title-cancel').addEventListener('click', () => closeModal(backdrop));
     backdrop.querySelector('#title-save').addEventListener('click', async () => {
       const title = input.value.trim();
+      const subtitle = backdrop.querySelector('#subtitle-input').value.trim();
       if (!title) { input.focus(); return; }
       const btn = backdrop.querySelector('#title-save');
       btn.disabled = true; btn.textContent = 'Saving…';
       try {
-        await updateDoc(doc(db, 'polls', pollId), { title });
+        await updateDoc(doc(db, 'polls', pollId), { title, subtitle: subtitle || deleteField() });
         closeModal(backdrop);
-        toast('Poll renamed');
+        toast('Poll updated');
       } catch (e) {
-        toast(`Could not rename poll: ${e.message || 'unknown error'}`);
+        toast(`Could not save poll: ${e.message || 'unknown error'}`);
         console.error(e);
         btn.disabled = false; btn.textContent = 'Save';
       }
@@ -1136,15 +1476,15 @@ function renderPollView(id){
     backdrop.className = 'modal-backdrop';
     backdrop.innerHTML = `
       <div class="modal">
-        <h3>Auto-close voting</h3>
-        <p>Voting closes by itself at this date and time (your device's local time). Leave it blank and save to remove the schedule.</p>
-        <label class="field-label">Close date & time</label>
+        <h3>Auto-lock options</h3>
+        <p>At this date and time, adding new options gets locked automatically — voting itself stays open for as long as you like. Leave it blank and save to remove the schedule.</p>
+        <label class="field-label">Lock date & time</label>
         <input id="closeat-input" type="datetime-local" class="field" value="${toDatetimeLocalValue(currentCloseAt)}" />
         <div style="display:flex;gap:10px;">
           <button class="btn btn-ghost" id="closeat-cancel" style="flex:1">Cancel</button>
           <button class="btn btn-primary" id="closeat-save" style="flex:1">${currentCloseAt ? 'Update' : 'Schedule'}</button>
         </div>
-        ${currentCloseAt ? `<button class="btn btn-ghost" id="closeat-remove" style="width:100%;margin-top:10px;color:var(--rose);">Remove auto-close</button>` : ''}
+        ${currentCloseAt ? `<button class="btn btn-ghost" id="closeat-remove" style="width:100%;margin-top:10px;color:var(--rose);">Remove auto-lock</button>` : ''}
       </div>
     `;
     openModal(backdrop);
@@ -1161,9 +1501,9 @@ function renderPollView(id){
       try {
         await updateDoc(doc(db, 'polls', pollId), { closeAt: chosen.toISOString() });
         closeModal(backdrop);
-        toast('Auto-close scheduled');
+        toast('Auto-lock scheduled');
       } catch (e) {
-        toast(`Could not schedule auto-close: ${e.message || 'unknown error'}`);
+        toast(`Could not schedule auto-lock: ${e.message || 'unknown error'}`);
         console.error(e);
         btn.disabled = false; btn.textContent = currentCloseAt ? 'Update' : 'Schedule';
       }
@@ -1174,9 +1514,9 @@ function renderPollView(id){
       try {
         await updateDoc(doc(db, 'polls', pollId), { closeAt: deleteField() });
         closeModal(backdrop);
-        toast('Auto-close removed');
+        toast('Auto-lock removed');
       } catch (e) {
-        toast(`Could not remove auto-close: ${e.message || 'unknown error'}`);
+        toast(`Could not remove auto-lock: ${e.message || 'unknown error'}`);
         console.error(e);
         btn.disabled = false; btn.textContent = 'Remove auto-close';
       }
@@ -1276,7 +1616,7 @@ async function renderResultsBlob(pollData, options){
   const totalVotes = options.reduce((sum, o) => sum + voteCount(o), 0);
   ctx.fillStyle = textMuted;
   ctx.font = "500 13px Inter, sans-serif";
-  ctx.fillText(`${pollData.closed ? 'Voting closed' : 'Voting open'} · ${totalVotes} vote${totalVotes===1?'':'s'} total`, PAD, 68);
+  ctx.fillText(`${pollData.closed ? 'Options locked' : 'Open'} · ${totalVotes} vote${totalVotes===1?'':'s'} total`, PAD, 68);
 
   const topCount = options.length ? Math.max(...options.map(voteCount)) : 0;
 
@@ -1374,13 +1714,13 @@ function truncateToWidth(ctx, str, maxWidth){
   return s + '…';
 }
 
-function optionCardHtml(opt, voter, totalVotes, isLeading, expanded){
+function optionCardHtml(opt, voter, totalVotes, isLeading, expanded, selectMode, isSelected){
   const count = voteCount(opt);
   const pct = totalVotes ? Math.round((count / totalVotes) * 100) : 0;
   const voterKey = voter ? voter.id : null;
   const hasVoted = !!(voterKey && opt.votes && opt.votes[voterKey]);
   const voterEntries = Object.entries(opt.votes || {});
-  const link = opt.link ?? opt.mapsUri ?? null;
+  const links = optionLinks(opt);
   const barColor = isLeading && count > 0 ? 'var(--gold)' : 'var(--violet-dim)';
 
   return `
@@ -1388,7 +1728,10 @@ function optionCardHtml(opt, voter, totalVotes, isLeading, expanded){
       <div class="option-row" data-vote-row="${opt.id}" role="button" tabindex="0" aria-pressed="${hasVoted}" aria-label="Vote for ${escapeHtml(opt.name)}">
         <div class="opt-progress-bg" style="width:${pct}%;background:${barColor};"></div>
         <div class="opt-row-content">
-          <div class="vote-btn ${hasVoted ? 'checked' : ''}" aria-hidden="true">${hasVoted ? '✓ Voted' : 'Vote'}</div>
+          ${selectMode
+            ? `<div class="select-check ${isSelected ? 'checked' : ''}" data-select-option="${opt.id}" aria-hidden="true">${isSelected ? '✓' : ''}</div>`
+            : `<div class="vote-btn ${hasVoted ? 'checked' : ''}" aria-hidden="true">${hasVoted ? '✓ Voted' : 'Vote'}</div>`
+          }
           <div class="opt-row-text"><div class="opt-title">${escapeHtml(opt.name)}</div></div>
           <div class="opt-count num">${count}</div>
           <button class="opt-chevron ${expanded ? 'open' : ''}" data-toggle-expand="${opt.id}" aria-label="${expanded ? 'Hide' : 'Show'} details for ${escapeHtml(opt.name)}" aria-expanded="${expanded}">▾</button>
@@ -1397,12 +1740,12 @@ function optionCardHtml(opt, voter, totalVotes, isLeading, expanded){
       ${expanded ? `
         <div class="option-detail">
           ${opt.notes ? `<div class="option-notes">${escapeHtml(opt.notes)}</div>` : ''}
-          ${link ? `<div class="option-sub"><a class="link-chip" href="${escapeHtml(link)}" target="_blank" rel="noopener">Reference link ↗</a></div>` : ''}
+          ${links.length ? `<div class="option-sub" style="display:flex;flex-wrap:wrap;gap:6px;">${links.map((l, i) => `<a class="link-chip" href="${escapeHtml(l)}" target="_blank" rel="noopener">${links.length > 1 ? `Link ${i+1}` : 'Reference link'} ↗</a>`).join('')}</div>` : ''}
           <div class="option-bottom">
             <div class="voter-tokens">
               ${voterEntries.map(([id, v]) => {
                 const c = getPersonColor(id);
-                return `<div class="voter-token" title="${escapeHtml(v.name)}" style="background:${c}22;border-color:${c};color:${c};">${escapeHtml(v.initials)}</div>`;
+                return `<button type="button" class="voter-token" data-voter-fullname="${escapeHtml(v.name)}" title="${escapeHtml(v.name)}" style="background:${c}22;border-color:${c};color:${c};">${escapeHtml(shortNameOf(v.name))}</button>`;
               }).join('')}
               <span class="vote-count-label">${count ? count + ' vote' + (count===1?'':'s') + (totalVotes ? ' · ' + pct + '%' : '') : 'No votes yet'}</span>
             </div>
@@ -1412,6 +1755,13 @@ function optionCardHtml(opt, voter, totalVotes, isLeading, expanded){
       ` : ''}
     </div>
   `;
+}
+/* Reads an option's reference link(s), tolerating the old single-`link`
+   shape from before multi-link support existed. */
+function optionLinks(opt){
+  if (Array.isArray(opt.links) && opt.links.length) return opt.links.filter(Boolean);
+  const legacy = opt.link ?? opt.mapsUri ?? null;
+  return legacy ? [legacy] : [];
 }
 
 function addOptionCardHtml(addTab, calState){
@@ -1439,9 +1789,11 @@ function textOptionFormHtml(){
     <div class="autofill-row">
       <input id="opt-link" class="field" placeholder="Paste a link here" />
       <button id="clear-link-btn" class="link-clear-btn" type="button" aria-label="Clear link">✕</button>
-      <button id="resolve-btn" class="btn btn-secondary btn-sm">📋 Paste</button>
+      <button id="resolve-btn" class="btn btn-secondary btn-sm">🔍 Search</button>
     </div>
     <p class="autofill-status" id="resolve-status"></p>
+    <div id="extra-links-wrap"></div>
+    <button type="button" id="add-link-btn" class="add-link-btn">＋ Add another link</button>
     <label class="field-label">Notes</label>
     <p class="field-label-sub">Optional</p>
     <textarea id="opt-notes" class="field" placeholder="e.g. good for groups, must book ahead"></textarea>
