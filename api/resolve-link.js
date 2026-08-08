@@ -75,15 +75,36 @@ function extractMetaContent(html, property) {
   return m ? m[1].trim() : null;
 }
 
+// Any run of "+" that survived to here is a leftover URL-encoding artifact
+// (Google Maps uses "+" in place of spaces inside path segments and some
+// query params), never a real character in a place name — so once we've
+// pulled a candidate name out of the URL, always flatten "+" back to a
+// space as a final safety net, on top of the per-pattern replace below.
+function despacePlus(s) {
+  return s ? s.replace(/\+/g, ' ') : s;
+}
+
 function extractPlaceNameFromMapsUrl(u) {
   try {
+    // Saved/tapped place: /maps/place/<name>/@lat,lng,...
     const placeMatch = u.match(/\/maps\/place\/([^/@]+)/);
     if (placeMatch) {
-      return decodeURIComponent(placeMatch[1].replace(/\+/g, ' ')).split(',')[0].trim();
+      return decodeURIComponent(despacePlus(placeMatch[1])).split(',')[0].trim();
     }
-    const qMatch = u.match(/[?&](?:q|query)=([^&]+)/);
+    // Typed search result: /maps/search/<name>/@lat,lng,... or /maps/search/?q=<name>
+    const searchMatch = u.match(/\/maps\/search\/([^/@?]+)/);
+    if (searchMatch) {
+      return decodeURIComponent(despacePlus(searchMatch[1])).split(',')[0].trim();
+    }
+    // Directions link with a named destination segment: /maps/dir/.../<name>/@lat,lng,...
+    const dirMatch = u.match(/\/maps\/dir\/(?:[^/]*\/)*([^/@]+)\/@/);
+    if (dirMatch && !/^-?\d+\.\d+,-?\d+\.\d+$/.test(dirMatch[1])) {
+      return decodeURIComponent(despacePlus(dirMatch[1])).split(',')[0].trim();
+    }
+    // Query-string based links: ?q=, ?query=, ?destination=, ?daddr=, ?saddr=
+    const qMatch = u.match(/[?&](?:q|query|destination|daddr|saddr)=([^&]+)/);
     if (qMatch) {
-      return decodeURIComponent(qMatch[1].replace(/\+/g, ' ')).split(',')[0].trim();
+      return decodeURIComponent(despacePlus(qMatch[1])).split(',')[0].trim();
     }
   } catch { /* malformed URI component — ignore, caller handles null */ }
   return null;
@@ -107,7 +128,7 @@ export default async function handler(req, res) {
      don't carry the name, so for those only, we resolve the redirect —
      and only the redirect, never the page body Google would block. */
   if (isGoogleMapsUrl(trimmed)) {
-    let name = cleanName(extractPlaceNameFromMapsUrl(trimmed));
+    let name = cleanName(despacePlus(extractPlaceNameFromMapsUrl(trimmed)));
     let finalUrl = trimmed;
 
     if (!name) {
@@ -121,8 +142,10 @@ export default async function handler(req, res) {
         });
         clearTimeout(timeout);
         finalUrl = r.url || trimmed;
-        name = cleanName(extractPlaceNameFromMapsUrl(finalUrl));
-      } catch { /* network hiccup — fall through to the friendly error below */ }
+        name = cleanName(despacePlus(extractPlaceNameFromMapsUrl(finalUrl)));
+      } catch (e) {
+        return res.status(500).json({ error: `Couldn't follow that Maps link (${e.name === 'AbortError' ? 'timed out' : e.message || 'network error'}) — type the name in below.` });
+      }
     }
 
     if (!name) {
@@ -178,7 +201,9 @@ export default async function handler(req, res) {
     res.status(200).json({ name, resolvedUrl: finalUrl });
   } catch (err) {
     clearTimeout(timeout);
-    const msg = err.name === 'AbortError' ? 'Link took too long to load.' : 'Could not read that link.';
+    const msg = err.name === 'AbortError'
+      ? 'Link took too long to load (timed out after 8s).'
+      : `Could not read that link (${err.message || 'unknown network error'}).`;
     res.status(500).json({ error: msg });
   }
 }
