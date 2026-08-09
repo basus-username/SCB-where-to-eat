@@ -170,11 +170,11 @@
   .poll-title-row{
     position:sticky;top:0;z-index:30;background:var(--bg);
     display:flex;align-items:center;gap:8px;
-    margin:0 -16px 6px;padding:14px 16px 10px;
+    margin:0 -16px 0;padding:14px 16px 6px;
     box-shadow:0 10px 14px -10px rgba(0,0,0,0.45);
   }
   .poll-title-row .poll-title{margin:0;}
-  .poll-subtitle{font-size:13.5px;color:var(--text-muted);margin:-2px 0 10px;}
+  .poll-subtitle{font-size:13.5px;color:var(--text-muted);margin:-4px 0 14px;}
   .poll-meta{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--text-muted);flex-wrap:wrap;}
   .status-pill{
     padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
@@ -222,10 +222,10 @@
   .opt-chevron:active{background:var(--violet-dim);}
   .opt-chevron.open{transform:rotate(180deg);}
   .vote-btn{
-    min-width:46px;height:30px;border-radius:9px;border:1.5px solid var(--border);
+    min-width:38px;height:24px;border-radius:7px;border:1.5px solid var(--border);
     background:var(--bg);color:var(--text-muted);
     flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:2px;
-    font-size:10px;font-weight:800;letter-spacing:.1px;text-transform:uppercase;padding:0 6px;
+    font-size:9px;font-weight:800;letter-spacing:.1px;text-transform:uppercase;padding:0 5px;
     transition:background .15s,border-color .15s,color .15s;
   }
   .vote-btn.checked{background:var(--green);border-color:var(--green);color:#0d1a10;}
@@ -303,6 +303,7 @@
   }
   .extra-link-row{display:flex;gap:6px;align-items:stretch;margin-bottom:10px;}
   .extra-link-row .field{margin-bottom:0;flex:1;min-width:0;}
+  #extra-links-wrap:not(:empty){margin-top:12px;}
   .history-fab{
     position:fixed;bottom:18px;z-index:40;width:34px;height:34px;border-radius:50%;
     background:var(--gold);color:#3a2705;border:none;font-size:16px;font-weight:800;
@@ -666,8 +667,10 @@ function bindSwipeToDelete(wrapSelector, rowSelector, delBtnAttr, onDelete, onAu
       armed = false;
       wrapWidth = wrap.getBoundingClientRect().width;
       // Far enough that it clearly reads as a deliberate "throw it away"
-      // gesture, not an accidental deep drag — about two-thirds of the row.
-      FAR = onAutoDelete ? -Math.max(200, wrapWidth * 0.62) : -Infinity;
+      // gesture, not an accidental deep drag — but short enough for a
+      // comfortable one-thumb swipe, not a two-handed stretch across the
+      // whole screen.
+      FAR = onAutoDelete ? -Math.max(108, wrapWidth * 0.36) : -Infinity;
       row.style.transition = 'none';
       row.setPointerCapture?.(e.pointerId);
     });
@@ -853,7 +856,7 @@ function renderPollView(id){
     // ask who's voting as soon as they land on a poll, not on their first tap
     if (!namePrompted && !getVoter()) {
       namePrompted = true;
-      askVoterName(() => draw());
+      askVoterName(() => draw(), options);
     }
   }, (err) => {
     $app.innerHTML = `<div class="empty-state">Couldn't load poll — check your Firebase config in index.html.</div>`;
@@ -891,11 +894,11 @@ function renderPollView(id){
         ` : `<button class="btn btn-ghost btn-sm" id="set-voter-btn">Set your name</button>`}
       </div>
 
+      <div class="poll-title-row">
+        <h1 class="poll-title" style="flex:1;">${escapeHtml(pollData.title)}</h1>
+        <button class="icon-btn" id="edit-title-btn" title="Edit poll title">✏️</button>
+      </div>
       <div class="poll-header">
-        <div class="poll-title-row">
-          <h1 class="poll-title" style="flex:1;">${escapeHtml(pollData.title)}</h1>
-          <button class="icon-btn" id="edit-title-btn" title="Edit poll title">✏️</button>
-        </div>
         ${pollData.subtitle ? `<div class="poll-subtitle">${escapeHtml(pollData.subtitle)}</div>` : ''}
         <div class="poll-meta">
           <span class="status-pill ${pollData.closed ? 'status-closed' : 'status-open'}">
@@ -915,6 +918,7 @@ function renderPollView(id){
         ${menuOpen ? `
           <div class="menu-popover" id="more-menu">
             <button class="menu-item" id="copy-results-btn">📋 Copy results</button>
+            <button class="menu-item" id="merge-identity-btn">🙋 Claim votes from a previous name</button>
             <button class="menu-item" id="bulk-select-btn">☑️ Select options to delete</button>
             <button class="menu-item" id="toggle-close-btn">${pollData.closed ? '↺ Unlock options (allow adding again)' : '🔒 Lock options (voting stays open)'}</button>
             <button class="menu-item" id="schedule-close-btn">${pollData.closeAt ? '⏰ Change auto-lock time' : '⏰ Auto-lock options at a set time'}</button>
@@ -961,7 +965,7 @@ function renderPollView(id){
     document.getElementById('poll-redo-fab')?.addEventListener('click', performRedo);
     const setVoterBtn = document.getElementById('set-voter-btn');
     const voterChip = document.getElementById('voter-chip');
-    if (setVoterBtn) setVoterBtn.addEventListener('click', () => askVoterName(() => draw()));
+    if (setVoterBtn) setVoterBtn.addEventListener('click', () => askVoterName(() => draw(), options));
     if (voterChip) voterChip.addEventListener('click', () => askVoterName(async (v) => {
       // renaming relabels this person's existing votes in this poll — it
       // never creates a duplicate voter or changes what they voted for.
@@ -1032,6 +1036,13 @@ function renderPollView(id){
       menuOpen = false;
       draw();
       copyResultsAsImage(pollData, options);
+    });
+
+    document.getElementById('merge-identity-btn')?.addEventListener('click', () => {
+      menuOpen = false;
+      draw();
+      if (!voter) { askVoterName((v) => openMergeIdentityModal(pollId, options, pollData, v), options); return; }
+      openMergeIdentityModal(pollId, options, pollData, voter);
     });
 
     document.getElementById('toggle-multi-btn')?.addEventListener('click', async () => {
@@ -1342,7 +1353,7 @@ function renderPollView(id){
     backdrop.innerHTML = `
       <div class="modal">
         <h3>Delete "${escapeHtml(opt.name)}"?</h3>
-        <p>Removes this option and its votes. You can undo right after.</p>
+        <p>Removes this option and its votes.</p>
         <div style="display:flex;gap:10px;">
           <button class="btn btn-ghost" id="delopt-cancel" style="flex:1">Cancel</button>
           <button class="btn" id="delopt-confirm" style="flex:1;background:var(--rose);color:#fff;">Delete option</button>
@@ -1382,7 +1393,7 @@ function renderPollView(id){
       <div class="modal">
         <h3>Delete ${n} option${n===1?'':'s'}?</h3>
         <p>${chosenOptions.map(o => escapeHtml(o.name)).join(', ')}</p>
-        <p>Removes ${n===1?'this option':'these options'} and their votes. You can undo right after.</p>
+        <p>Removes ${n===1?'this option':'these options'} and their votes.</p>
         <div style="display:flex;gap:10px;">
           <button class="btn btn-ghost" id="bulkdel-cancel" style="flex:1">Cancel</button>
           <button class="btn" id="bulkdel-confirm" style="flex:1;background:var(--rose);color:#fff;">Delete ${n}</button>
@@ -1684,8 +1695,6 @@ async function renderResultsBlob(pollData, options){
   ctx.font = "500 13px Inter, sans-serif";
   ctx.fillText(`${pollData.closed ? 'Options locked' : 'Open'} · ${totalVotes} vote${totalVotes===1?'':'s'} total`, PAD, 68);
 
-  const topCount = options.length ? Math.max(...options.map(voteCount)) : 0;
-
   let y = HEADER_H;
   if (!options.length) {
     ctx.fillStyle = textMuted;
@@ -1696,7 +1705,6 @@ async function renderResultsBlob(pollData, options){
   options.forEach((opt) => {
     const count = voteCount(opt);
     const pct = totalVotes ? count / totalVotes : 0;
-    const isLeading = count > 0 && count === topCount;
     const rowY = y;
     const barMaxW = W - PAD * 2;
 
@@ -1712,7 +1720,7 @@ async function renderResultsBlob(pollData, options){
       ctx.save();
       roundRect(ctx, PAD, rowY + 6, barMaxW, ROW_H - 16, 12); ctx.clip();
       ctx.globalAlpha = 0.5;
-      ctx.fillStyle = isLeading ? gold : violetDim;
+      ctx.fillStyle = violetDim;
       ctx.fillRect(PAD, rowY + 6, fillW, ROW_H - 16);
       ctx.restore();
     }
@@ -1725,7 +1733,7 @@ async function renderResultsBlob(pollData, options){
 
     // count + pct, right aligned
     ctx.textAlign = 'right';
-    ctx.fillStyle = isLeading ? gold : violet;
+    ctx.fillStyle = violet;
     ctx.font = "700 15px 'JetBrains Mono', monospace";
     ctx.fillText(`${count}`, W - PAD - 16, rowY + ROW_H / 2);
     ctx.fillStyle = textMuted;
@@ -1787,7 +1795,7 @@ function optionCardHtml(opt, voter, totalVotes, isLeading, expanded, selectMode,
   const hasVoted = !!(voterKey && opt.votes && opt.votes[voterKey]);
   const voterEntries = Object.entries(opt.votes || {});
   const links = optionLinks(opt);
-  const barColor = isLeading && count > 0 ? 'var(--gold)' : 'var(--violet-dim)';
+  const barColor = 'var(--violet-dim)';
 
   return `
     <div class="option-card" data-option-id="${opt.id}">
@@ -1991,15 +1999,36 @@ async function castVote(pollId, options, optId, multiChoice){
   await Promise.all(updates);
 }
 
-/* ---------- voter name prompt ---------- */
-function askVoterName(onDone){
+/* ---------- voter name prompt ----------
+   priorOptions (optional): the poll's current options, used only to offer
+   a quick "is this you?" pick from names that already voted in this poll —
+   so a fresh device identity (e.g. after clearing site data) can rejoin an
+   existing identity instead of always minting a new one. */
+function askVoterName(onDone, priorOptions){
   const existing = getVoter();
+  const candidates = [];
+  if (!existing && priorOptions && priorOptions.length) {
+    const seen = new Set();
+    priorOptions.forEach(opt => {
+      Object.entries(opt.votes || {}).forEach(([vid, v]) => {
+        if (seen.has(vid)) return;
+        seen.add(vid);
+        candidates.push([vid, v.name]);
+      });
+    });
+  }
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop';
   backdrop.innerHTML = `
     <div class="modal">
       <h3>${existing ? 'Edit your name' : "What's your name?"}</h3>
       <p>Shown next to your vote so friends know who picked what. Saved on this device only.${existing ? ' Renaming keeps all your existing votes — it just relabels them.' : ''}</p>
+      ${candidates.length ? `
+        <p style="font-size:12px;color:var(--text-muted);margin:-8px 0 8px;">Voted here before under a different name? Tap it to pick up where you left off — or type a new name below.</p>
+        <div class="chip-row" style="margin-bottom:14px;">
+          ${candidates.map(([vid, name]) => `<button type="button" class="chip" data-claim-quick="${vid}" data-claim-name="${escapeHtml(name)}">${escapeHtml(name)}</button>`).join('')}
+        </div>
+      ` : ''}
       <input id="voter-name-input" class="field" placeholder="e.g. Pikachew" maxlength="20" value="${existing ? escapeHtml(existing.name) : ''}" />
       <button class="btn btn-primary" id="voter-name-save">${existing ? 'Save' : 'Continue'}</button>
     </div>
@@ -2009,6 +2038,17 @@ function askVoterName(onDone){
   input.focus();
   if (existing) input.select();
   backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(backdrop); });
+  backdrop.querySelectorAll('[data-claim-quick]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const vid = btn.getAttribute('data-claim-quick');
+      const name = btn.getAttribute('data-claim-name');
+      localStorage.setItem('poll_voter_id', vid);
+      const v = { id: vid, name, initials: initialsOf(name) };
+      localStorage.setItem('poll_voter', JSON.stringify(v));
+      closeModal(backdrop);
+      if (onDone) onDone(v);
+    });
+  });
   backdrop.querySelector('#voter-name-save').addEventListener('click', () => {
     const name = input.value.trim();
     if (!name) { input.focus(); return; }
@@ -2016,6 +2056,104 @@ function askVoterName(onDone){
     closeModal(backdrop);
     if (onDone) onDone(voter);
   });
+}
+
+/* ---------- claim/merge a duplicate identity ----------
+   Workaround for the "cleared my cache and now I'm a new person" problem:
+   lets someone fold an earlier identity's votes into their current one. */
+function openMergeIdentityModal(pollId, options, pollData, voter){
+  const currentId = voter.id;
+  const seen = new Map();
+  options.forEach(opt => {
+    Object.entries(opt.votes || {}).forEach(([vid, v]) => {
+      if (vid === currentId) return;
+      const rec = seen.get(vid) || { name: v.name, count: 0 };
+      rec.name = v.name;
+      rec.count++;
+      seen.set(vid, rec);
+    });
+  });
+  const candidates = [...seen.entries()];
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <h3>Claim votes from a previous name</h3>
+      <p>If you voted here before under a different name (e.g. after clearing your browser data), pick it below to move those votes to your current name, "${escapeHtml(voter.name)}".</p>
+      ${candidates.length ? `
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${candidates.map(([vid, rec]) => `
+            <button type="button" class="menu-item" style="border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;justify-content:space-between;" data-claim-id="${vid}">
+              <span>${escapeHtml(rec.name)}</span><span style="color:var(--text-muted);">${rec.count} vote${rec.count===1?'':'s'}</span>
+            </button>
+          `).join('')}
+        </div>
+      ` : `<p style="margin-top:-8px;">No other names have voted in this poll yet.</p>`}
+    </div>
+  `;
+  openModal(backdrop);
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(backdrop); });
+  backdrop.querySelectorAll('[data-claim-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const vid = btn.getAttribute('data-claim-id');
+      const rec = seen.get(vid);
+      closeModal(backdrop);
+      openConfirmClaimModal(pollId, options, pollData, voter, vid, rec);
+    });
+  });
+}
+function openConfirmClaimModal(pollId, options, pollData, voter, oldId, rec){
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <h3>Claim "${escapeHtml(rec.name)}"'s votes?</h3>
+      <p>Moves ${rec.count} vote${rec.count===1?'':'s'} to your current name, "${escapeHtml(voter.name)}", and removes the duplicate. Can't be undone.</p>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-ghost" id="claim-cancel" style="flex:1">Cancel</button>
+        <button class="btn btn-primary" id="claim-confirm" style="flex:1;">Claim votes</button>
+      </div>
+    </div>
+  `;
+  openModal(backdrop);
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(backdrop); });
+  backdrop.querySelector('#claim-cancel').addEventListener('click', () => closeModal(backdrop));
+  backdrop.querySelector('#claim-confirm').addEventListener('click', async () => {
+    const btn = backdrop.querySelector('#claim-confirm');
+    btn.disabled = true; btn.textContent = 'Claiming…';
+    try {
+      const { moved } = await mergeVoterIdentity(pollId, options, pollData.multiChoice, oldId, voter);
+      closeModal(backdrop);
+      toast(moved ? `Claimed ${moved} vote${moved===1?'':'s'} from ${rec.name}` : `Removed duplicate — you'd already voted here`);
+    } catch (e) {
+      toast(`Could not claim votes: ${e.message || 'unknown error'}`);
+      btn.disabled = false; btn.textContent = 'Claim votes';
+      console.error(e);
+    }
+  });
+}
+async function mergeVoterIdentity(pollId, options, multiChoice, oldId, currentVoter){
+  const currentId = currentVoter.id;
+  const currentHasAnyVote = options.some(o => o.votes && o.votes[currentId]);
+  const ops = [];
+  let moved = 0;
+  for (const opt of options) {
+    const oldVote = opt.votes && opt.votes[oldId];
+    if (!oldVote) continue;
+    if (!multiChoice && currentHasAnyVote) {
+      // Single-choice poll and this identity already has its one pick —
+      // don't overwrite it, just clear the stale duplicate.
+      ops.push(updateDoc(doc(db, 'polls', pollId, 'options', opt.id), { [`votes.${oldId}`]: deleteField() }));
+      continue;
+    }
+    ops.push(updateDoc(doc(db, 'polls', pollId, 'options', opt.id), {
+      [`votes.${currentId}`]: { name: currentVoter.name, initials: currentVoter.initials },
+      [`votes.${oldId}`]: deleteField()
+    }));
+    moved++;
+  }
+  await Promise.all(ops);
+  return { moved };
 }
 
 /* ---------- service worker (PWA install support) ---------- */
