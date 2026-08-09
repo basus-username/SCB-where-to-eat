@@ -3,7 +3,7 @@
 // (Network-first, not cache-first: this app is actively iterated on, and a
 // cache-first worker would keep serving a stale version forever once a
 // device had loaded it once, even after a real bug fix ships.)
-const CACHE_NAME = 'youvote-v5';
+const CACHE_NAME = 'youvote-v6';
 const PRECACHE = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', (event) => {
@@ -24,8 +24,9 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  const isDocument = event.request.mode === 'navigate' || event.request.destination === 'document';
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, isDocument ? { cache: 'no-store' } : {})
       .then((res) => {
         const copy = res.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => {});

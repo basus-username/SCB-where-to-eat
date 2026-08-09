@@ -167,6 +167,13 @@
   /* ---------- Poll view ---------- */
   .poll-header{margin-bottom:18px;}
   .poll-title{font-size:24px;margin:0 0 6px;}
+  .poll-title-row{
+    position:sticky;top:0;z-index:30;background:var(--bg);
+    display:flex;align-items:center;gap:8px;
+    margin:0 -16px 6px;padding:14px 16px 10px;
+    box-shadow:0 10px 14px -10px rgba(0,0,0,0.45);
+  }
+  .poll-title-row .poll-title{margin:0;}
   .poll-subtitle{font-size:13.5px;color:var(--text-muted);margin:-2px 0 10px;}
   .poll-meta{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--text-muted);flex-wrap:wrap;}
   .status-pill{
@@ -187,7 +194,7 @@
   }
   .menu-item{
     width:100%;text-align:left;background:transparent;border:none;color:var(--text);
-    padding:12px 14px;font-size:13.5px;font-weight:400;border-bottom:1px solid var(--border);
+    padding:9px 14px;font-size:12.5px;font-weight:400;border-bottom:1px solid var(--border);
   }
   .menu-item:last-child{border-bottom:none;}
   .menu-item:active{background:var(--surface-2);}
@@ -239,8 +246,15 @@
   .link-chip{
     color:var(--violet);text-decoration:none;font-weight:600;
     background:rgba(140,122,230,0.12);border:1px solid var(--violet-dim);
-    padding:3px 9px;border-radius:20px;font-size:11.5px;
+    padding:3px 9px;border-radius:20px 0 0 20px;border-right:none;font-size:11.5px;
+    max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
+  .link-row-item{display:inline-flex;align-items:stretch;}
+  .link-copy-btn{
+    color:var(--text-muted);background:rgba(140,122,230,0.12);border:1px solid var(--violet-dim);
+    border-radius:0 20px 20px 0;padding:3px 8px;font-size:11px;line-height:1;
+  }
+  .link-copy-btn:active{background:var(--violet-dim);color:var(--text);}
   .option-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:8px;}
   .voter-tokens{display:flex;flex-wrap:wrap;gap:5px;flex:1;align-items:center;}
   .voter-token{
@@ -277,6 +291,7 @@
   .autofill-row{display:flex;gap:6px;align-items:stretch;}
   .autofill-row .field{margin-bottom:0;flex:1;min-width:0;}
   .btn-secondary{background:var(--surface-2);color:var(--violet);border:1px solid var(--violet-dim);}
+  .btn-search{color:var(--text);border-color:var(--violet);background:var(--violet-dim);}
   .link-clear-btn{
     flex-shrink:0;width:40px;background:var(--surface-2);border:1.5px solid var(--border);
     color:var(--text-muted);border-radius:var(--radius-sm);font-size:14px;padding:0;
@@ -284,7 +299,7 @@
   .link-clear-btn:active{background:var(--violet-dim);color:var(--text);}
   .add-link-btn{
     background:transparent;border:none;color:var(--violet);font-size:12px;font-weight:700;
-    padding:2px 0 14px;text-align:left;display:block;
+    padding:0 0 22px;text-align:left;display:block;
   }
   .extra-link-row{display:flex;gap:6px;align-items:stretch;margin-bottom:10px;}
   .extra-link-row .field{margin-bottom:0;flex:1;min-width:0;}
@@ -294,6 +309,11 @@
     display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.35);
     opacity:0.92;transition:opacity .15s,transform .1s;
   }
+  .fab-badge{
+    position:absolute;top:-4px;right:-4px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;
+    background:var(--rose);color:#2a0f0f;font-size:9px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;line-height:1;
+  }
   .history-fab:active{transform:scale(0.92);}
   .history-fab:disabled{opacity:0.28;background:var(--surface-2);color:var(--text-muted);box-shadow:none;}
   .history-fab-left{left:14px;}
@@ -302,6 +322,7 @@
     font-size:12px;color:var(--text-muted);margin:8px 0 0;min-height:16px;
     overflow-wrap:anywhere;word-break:break-word;white-space:normal;line-height:1.4;
   }
+  .autofill-status:empty{margin:0;min-height:0;}
 
   .tab-row{display:flex;gap:8px;margin-bottom:14px;}
   .tab-btn{
@@ -354,8 +375,8 @@
 </style>
 </head>
 <body>
-<button id="undo-fab" class="undo-fab" aria-label="Undo last delete">
-  <span class="undo-fab-icon">↺</span><span class="undo-fab-text" id="undo-fab-text"></span>
+<button id="temp-undo-banner" class="undo-fab" aria-label="Undo last delete">
+  <span class="undo-fab-icon">↺</span><span class="undo-fab-text" id="temp-undo-banner-text"></span>
 </button>
 <div id="app"><div class="empty-state">Loading…</div></div>
 <div id="toast" class="toast"></div>
@@ -525,8 +546,8 @@ function removeRecent(id){
    Lives entirely in this browser tab's memory, so it only ever undoes an
    action that this same person just took here — nobody else can trigger it. */
 let pendingUndo = null;
-const $undoFab = document.getElementById('undo-fab');
-const $undoFabText = document.getElementById('undo-fab-text');
+const $undoFab = document.getElementById('temp-undo-banner');
+const $undoFabText = document.getElementById('temp-undo-banner-text');
 function showUndoBanner(message, restoreFn){
   pendingUndo = { restore: restoreFn };
   $undoFabText.textContent = message;
@@ -701,12 +722,19 @@ function bindSwipeToDelete(wrapSelector, rowSelector, delBtnAttr, onDelete, onAu
     };
     row.addEventListener('pointerup', finish);
     row.addEventListener('pointercancel', finish);
+    // Capture phase, not bubble: a click on the inner .option-row (which
+    // has its own vote-casting click handler) reaches that handler BEFORE
+    // it would reach a bubble-phase listener here — so suppressing it here,
+    // after the fact, was too late and the vote fired anyway. Intercepting
+    // during capture (outside-in, parent before child) stops it in time.
     row.addEventListener('click', (e) => {
       if (suppressClick) {
         e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         suppressClick = false;
       }
-    });
+    }, true);
 
     delBtn?.addEventListener('click', () => onDelete(delBtn));
   });
@@ -784,10 +812,34 @@ function renderPollView(id){
     updateHistoryButtons();
   }
   function updateHistoryButtons(){
-    const u = document.getElementById('undo-fab');
-    const r = document.getElementById('redo-fab');
-    if (u) u.disabled = history.undo.length === 0;
-    if (r) r.disabled = history.redo.length === 0;
+    const u = document.getElementById('poll-undo-fab');
+    const r = document.getElementById('poll-redo-fab');
+    if (u) {
+      const top = history.undo[history.undo.length - 1];
+      u.disabled = !top;
+      u.title = top ? `Undo: ${top.label}` : 'Nothing to undo yet';
+      u.setAttribute('aria-label', u.title);
+      u.querySelector('.fab-badge')?.remove();
+      if (history.undo.length > 1) {
+        const badge = document.createElement('span');
+        badge.className = 'fab-badge';
+        badge.textContent = String(history.undo.length);
+        u.appendChild(badge);
+      }
+    }
+    if (r) {
+      const top = history.redo[history.redo.length - 1];
+      r.disabled = !top;
+      r.title = top ? `Redo: ${top.label}` : 'Nothing to redo';
+      r.setAttribute('aria-label', r.title);
+      r.querySelector('.fab-badge')?.remove();
+      if (history.redo.length > 1) {
+        const badge = document.createElement('span');
+        badge.className = 'fab-badge';
+        badge.textContent = String(history.redo.length);
+        r.appendChild(badge);
+      }
+    }
   }
 
   onSnapshot(pollRef, (snap) => {
@@ -840,7 +892,7 @@ function renderPollView(id){
       </div>
 
       <div class="poll-header">
-        <div style="display:flex;align-items:center;gap:8px;">
+        <div class="poll-title-row">
           <h1 class="poll-title" style="flex:1;">${escapeHtml(pollData.title)}</h1>
           <button class="icon-btn" id="edit-title-btn" title="Edit poll title">✏️</button>
         </div>
@@ -864,8 +916,8 @@ function renderPollView(id){
           <div class="menu-popover" id="more-menu">
             <button class="menu-item" id="copy-results-btn">📋 Copy results</button>
             <button class="menu-item" id="bulk-select-btn">☑️ Select options to delete</button>
-            <button class="menu-item" id="schedule-close-btn">${pollData.closeAt ? '⏰ Change auto-lock time' : '⏰ Auto-lock options at a set time'}</button>
             <button class="menu-item" id="toggle-close-btn">${pollData.closed ? '↺ Unlock options (allow adding again)' : '🔒 Lock options (voting stays open)'}</button>
+            <button class="menu-item" id="schedule-close-btn">${pollData.closeAt ? '⏰ Change auto-lock time' : '⏰ Auto-lock options at a set time'}</button>
           </div>
         ` : ''}
       </div>
@@ -896,8 +948,8 @@ function renderPollView(id){
         </div>
       `).join('')}
 
-      <button class="history-fab history-fab-left" id="undo-fab" title="Undo your last action" aria-label="Undo" disabled>↺</button>
-      <button class="history-fab history-fab-right" id="redo-fab" title="Redo" aria-label="Redo" disabled>↻</button>
+      <button class="history-fab history-fab-left" id="poll-undo-fab" title="Nothing to undo yet" aria-label="Undo" disabled>↺</button>
+      <button class="history-fab history-fab-right" id="poll-redo-fab" title="Nothing to redo" aria-label="Redo" disabled>↻</button>
     `;
 
     bindPollEvents(id, pollData, options, voter);
@@ -905,8 +957,8 @@ function renderPollView(id){
   }
 
   function bindPollEvents(pollId, pollData, options, voter){
-    document.getElementById('undo-fab')?.addEventListener('click', performUndo);
-    document.getElementById('redo-fab')?.addEventListener('click', performRedo);
+    document.getElementById('poll-undo-fab')?.addEventListener('click', performUndo);
+    document.getElementById('poll-redo-fab')?.addEventListener('click', performRedo);
     const setVoterBtn = document.getElementById('set-voter-btn');
     const voterChip = document.getElementById('voter-chip');
     if (setVoterBtn) setVoterBtn.addEventListener('click', () => askVoterName(() => draw()));
@@ -1076,6 +1128,21 @@ function renderPollView(id){
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         toast(btn.getAttribute('data-voter-fullname'));
+      });
+    });
+
+    document.querySelectorAll('[data-copy-link]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const url = btn.getAttribute('data-copy-link');
+        try {
+          await navigator.clipboard.writeText(url);
+          toast('Link copied');
+        } catch (err) {
+          toast(`Could not copy link: ${err.message || 'clipboard unavailable'}`);
+          console.error(err);
+        }
       });
     });
 
@@ -1262,9 +1329,7 @@ function renderPollView(id){
         undo: () => setDoc(doc(db, 'polls', pollId, 'options', id), rest),
         redo: () => deleteDoc(doc(db, 'polls', pollId, 'options', id)),
       });
-      showUndoBanner(`Deleted "${opt.name}"`, async () => {
-        await setDoc(doc(db, 'polls', pollId, 'options', id), rest);
-      });
+      toast(`Deleted "${opt.name}" — tap ↺ to undo`);
     } catch (e) {
       toast(`Could not delete option: ${e.message || 'unknown error'}`);
       console.error(e);
@@ -1299,9 +1364,7 @@ function renderPollView(id){
           undo: () => setDoc(doc(db, 'polls', pollId, 'options', id), rest),
           redo: () => deleteDoc(doc(db, 'polls', pollId, 'options', id)),
         });
-        showUndoBanner(`Deleted "${opt.name}"`, async () => {
-          await setDoc(doc(db, 'polls', pollId, 'options', id), rest);
-        });
+        toast(`Deleted "${opt.name}" — tap ↺ to undo`);
       } catch (e) {
         toast(`Could not delete option: ${e.message || 'unknown error'}`);
         btn.disabled = false; btn.textContent = 'Delete option';
@@ -1337,9 +1400,12 @@ function renderPollView(id){
         await Promise.all(chosenOptions.map(o => deleteDoc(doc(db, 'polls', pollId, 'options', o.id))));
         closeModal(backdrop);
         onDone();
-        showUndoBanner(`Deleted ${n} option${n===1?'':'s'}`, async () => {
-          await Promise.all(snapshots.map(s => setDoc(doc(db, 'polls', pollId, 'options', s.id), s.rest)));
+        pushHistory({
+          label: `Delete ${n} option${n===1?'':'s'}`,
+          undo: () => Promise.all(snapshots.map(s => setDoc(doc(db, 'polls', pollId, 'options', s.id), s.rest))),
+          redo: () => Promise.all(snapshots.map(s => deleteDoc(doc(db, 'polls', pollId, 'options', s.id)))),
         });
+        toast(`Deleted ${n} option${n===1?'':'s'} — tap ↺ to undo`);
       } catch (e) {
         toast(`Could not delete options: ${e.message || 'unknown error'}`);
         btn.disabled = false; btn.textContent = `Delete ${n}`;
@@ -1740,7 +1806,12 @@ function optionCardHtml(opt, voter, totalVotes, isLeading, expanded, selectMode,
       ${expanded ? `
         <div class="option-detail">
           ${opt.notes ? `<div class="option-notes">${escapeHtml(opt.notes)}</div>` : ''}
-          ${links.length ? `<div class="option-sub" style="display:flex;flex-wrap:wrap;gap:6px;">${links.map((l, i) => `<a class="link-chip" href="${escapeHtml(l)}" target="_blank" rel="noopener">${links.length > 1 ? `Link ${i+1}` : 'Reference link'} ↗</a>`).join('')}</div>` : ''}
+          ${links.length ? `<div class="option-sub" style="display:flex;flex-wrap:wrap;gap:6px;">${links.map((l) => `
+            <span class="link-row-item">
+              <a class="link-chip" href="${escapeHtml(l)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(l)}">🔗 ${escapeHtml(linkPreviewLabel(l))} ↗</a>
+              <button type="button" class="link-copy-btn" data-copy-link="${escapeHtml(l)}" title="Copy link" aria-label="Copy link">📋</button>
+            </span>
+          `).join('')}</div>` : ''}
           <div class="option-bottom">
             <div class="voter-tokens">
               ${voterEntries.map(([id, v]) => {
@@ -1758,6 +1829,21 @@ function optionCardHtml(opt, voter, totalVotes, isLeading, expanded, selectMode,
 }
 /* Reads an option's reference link(s), tolerating the old single-`link`
    shape from before multi-link support existed. */
+/* Turns a raw URL into a short, recognizable label — the actual domain,
+   with a couple of very common ones given a friendlier name — so a voter
+   can tell what they're about to open instead of tapping a blind "Link 1". */
+function linkPreviewLabel(url){
+  let hostname;
+  try { hostname = new URL(url).hostname.replace(/^www\./, ''); }
+  catch { return (url || '').slice(0, 24); }
+  const known = {
+    'google.com': 'Google Maps', 'maps.google.com': 'Google Maps', 'goo.gl': 'Google Maps',
+    'maps.app.goo.gl': 'Google Maps',
+    'instagram.com': 'Instagram', 'xiaohongshu.com': 'XHS', 'xhslink.com': 'XHS',
+    'tiktok.com': 'TikTok', 'facebook.com': 'Facebook', 'fb.watch': 'Facebook',
+  };
+  return known[hostname] || hostname;
+}
 function optionLinks(opt){
   if (Array.isArray(opt.links) && opt.links.length) return opt.links.filter(Boolean);
   const legacy = opt.link ?? opt.mapsUri ?? null;
@@ -1789,7 +1875,7 @@ function textOptionFormHtml(){
     <div class="autofill-row">
       <input id="opt-link" class="field" placeholder="Paste a link here" />
       <button id="clear-link-btn" class="link-clear-btn" type="button" aria-label="Clear link">✕</button>
-      <button id="resolve-btn" class="btn btn-secondary btn-sm">🔍 Search</button>
+      <button id="resolve-btn" class="btn btn-secondary btn-search btn-sm">🔍 Search</button>
     </div>
     <p class="autofill-status" id="resolve-status"></p>
     <div id="extra-links-wrap"></div>
